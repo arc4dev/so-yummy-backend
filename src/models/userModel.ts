@@ -1,7 +1,17 @@
 import mongoose from 'mongoose';
 import bcrypt from 'bcrypt';
 
-const userSchema = new mongoose.Schema({
+interface UserDocument extends mongoose.Document {
+  id: mongoose.Types.ObjectId;
+  email: string;
+  password: string;
+  name: string;
+  verify: boolean;
+  verificationToken?: string | null;
+  isCorrectPassword(password: string, hashedPassword: string): Promise<boolean>;
+}
+
+const userSchema = new mongoose.Schema<UserDocument>({
   email: {
     type: String,
     required: [true, 'Email is required'],
@@ -50,6 +60,6 @@ userSchema.methods.isCorrectPassword = async function (
   return await bcrypt.compare(passwordToCheck, userPassword);
 };
 
-const User = mongoose.model('User', userSchema);
+const User = mongoose.model<UserDocument>('User', userSchema);
 
 export default User;

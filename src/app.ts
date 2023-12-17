@@ -1,5 +1,7 @@
-import express, { NextFunction, Request, Response } from 'express';
 import dotenv from 'dotenv';
+dotenv.config();
+
+import express, { NextFunction, Request, Response } from 'express';
 import morgan from 'morgan';
 import cors from 'cors';
 
@@ -8,7 +10,6 @@ import recipeRouter from './routes/recipeRouter.js';
 import authRouter from './routes/authRouter.js';
 import userRouter from './routes/userRouter.js';
 
-dotenv.config();
 const app = express();
 
 // Middlewares

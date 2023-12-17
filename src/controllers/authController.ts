@@ -6,6 +6,7 @@ import jwt from 'jsonwebtoken';
 
 import User from '../models/userModel.js';
 import { sendEmail } from '../utils/sendEmail.js';
+import catchAsync from '../utils/catchAsync.js';
 
 // helpers
 const signToken = (payload: {
@@ -38,31 +39,32 @@ const auth: RequestHandler = async (req, res, next) => {
   )(req, res, next);
 };
 
-const signUp: RequestHandler = async (req, res, next) => {
-  try {
-    const { body } = req;
-    const { email, name, password } = body;
+const signUp: RequestHandler = catchAsync(async (req, res, next) => {
+  const { body } = req;
+  const { email, name, password } = body;
 
-    // 1. Create a user
-    const user = await User.create({
-      name,
-      email,
-      password,
-      verificationToken: nanoid(),
-    });
+  // 1. Create a user
+  const user = await User.create({
+    name,
+    email,
+    password,
+    verificationToken: nanoid(),
+  });
 
-    // 2. Send verification email
-    sendEmail(url(user.verificationToken, req), email);
+  if (!user.verificationToken)
+    return res
+      .status(400)
+      .json({ status: 'fail', message: 'Something went wrong' });
 
-    res.status(201).json({
-      status: 'success',
-      message:
-        'Account created. Please check your email to verify your account and log in afterwards!',
-    });
-  } catch (err) {
-    res.status(400).json({ status: 'fail', message: err.message });
-  }
-};
+  // 2. Send verification email
+  sendEmail(url(user.verificationToken, req), email);
+
+  res.status(201).json({
+    status: 'success',
+    message:
+      'Account created. Please check your email to verify your account and log in afterwards!',
+  });
+});
 
 const signIn: RequestHandler = async (req, res, next) => {
   try {
@@ -104,7 +106,7 @@ const signIn: RequestHandler = async (req, res, next) => {
       token,
     });
   } catch (err) {
-    res.status(400).json({ status: 'fail', message: err.message });
+    res.status(400).json({ status: 'fail', message: (err as Error).message });
   }
 };
 
@@ -114,7 +116,7 @@ const signOut: RequestHandler = async (req, res, next) => {
       status: 'success',
     });
   } catch (err) {
-    res.status(400).json({ status: 'fail', message: err.message });
+    res.status(400).json({ status: 'fail', message: (err as Error).message });
   }
 };
 
@@ -123,7 +125,6 @@ const verifyUser: RequestHandler = async (req, res, next) => {
     const { verificationToken } = req.params;
 
     const user = await User.findOne({ verificationToken });
-    console.log(user);
 
     if (!user)
       return res
@@ -134,14 +135,13 @@ const verifyUser: RequestHandler = async (req, res, next) => {
     user.verificationToken = null;
 
     await user.save();
-    console.log(user);
 
     res.status(200).json({
       status: 'success',
       message: 'Verification successful. You can low log in!',
     });
   } catch (err) {
-    res.status(400).send({ status: 'fail', message: err.message });
+    res.status(400).send({ status: 'fail', message: (err as Error).message });
   }
 };
 
@@ -158,13 +158,18 @@ const resendVerificationEmail: RequestHandler = async (req, res, next) => {
         message: 'Verification has already been passed',
       });
 
+    if (!user.verificationToken)
+      return res
+        .status(400)
+        .json({ status: 'fail', message: 'Something went wrong' });
+
     sendEmail(url(user.verificationToken, req), email);
 
     res
       .status(200)
       .json({ status: 'success', message: 'Verification email sent' });
   } catch (err) {
-    res.status(400).send({ status: 'fail', message: err.message });
+    res.status(400).send({ status: 'fail', message: (err as Error).message });
   }
 };
 

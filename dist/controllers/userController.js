@@ -1,7 +1,7 @@
 import User from '../models/userModel.js';
 const getCurrentUser = async (req, res, next) => {
     try {
-        const { id } = req.user;
+        const { id } = req.user; // to fix
         if (!id)
             return res
                 .status(404)

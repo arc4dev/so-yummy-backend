@@ -3,8 +3,8 @@ process.on('uncaughtException', (err) => {
     console.log(err.name, err.message, err.stack);
     process.exit(1);
 });
-import mongoose from 'mongoose';
 import app from './app.js';
+import mongoose from 'mongoose';
 // Database connection
 mongoose
     .connect(`mongodb+srv://${process.env.DB_USERNAME}:${process.env.DB_PASSWORD}@cluster0.xbudkcm.mongodb.net/so-yummy`)

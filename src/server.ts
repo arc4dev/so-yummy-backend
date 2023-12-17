@@ -4,8 +4,8 @@ process.on('uncaughtException', (err) => {
   process.exit(1);
 });
 
-import mongoose from 'mongoose';
 import app from './app.js';
+import mongoose from 'mongoose';
 
 // Database connection
 mongoose

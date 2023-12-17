@@ -9,7 +9,7 @@ const addNewRecipe: RequestHandler = async (req, res, next) => {
 
     res.status(201).json({ status: 'success', data: newRecipe });
   } catch (err) {
-    res.status(400).json({ status: 'fail', message: err.message });
+    res.status(400).json({ status: 'fail', message: (err as Error).message });
   }
 };
 
@@ -28,7 +28,7 @@ const deleteRecipe: RequestHandler = async (req, res, next) => {
       data: null,
     });
   } catch (err) {
-    res.status(400).json({ status: 'fail', message: err.message });
+    res.status(400).json({ status: 'fail', message: (err as Error).message });
   }
 };
 
@@ -43,7 +43,7 @@ const getAllRecipeCategories: RequestHandler = async (req, res, next) => {
       data: categories,
     });
   } catch (err) {
-    res.status(400).json({ status: 'fail', message: err.message });
+    res.status(400).json({ status: 'fail', message: (err as Error).message });
   }
 };
 

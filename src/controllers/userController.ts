@@ -3,7 +3,7 @@ import User from '../models/userModel.js';
 
 const getCurrentUser: RequestHandler = async (req, res, next) => {
   try {
-    const { id } = req.user;
+    const { id } = req.user as { id: string }; // to fix
 
     if (!id)
       return res
@@ -22,7 +22,7 @@ const getCurrentUser: RequestHandler = async (req, res, next) => {
       data: user,
     });
   } catch (err) {
-    res.status(400).json({ status: 'fail', message: err.message });
+    res.status(400).json({ status: 'fail', message: (err as Error).message });
   }
 };
 

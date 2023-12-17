@@ -3,6 +3,7 @@ import passport from '../config/config-passport.js';
 import jwt from 'jsonwebtoken';
 import User from '../models/userModel.js';
 import { sendEmail } from '../utils/sendEmail.js';
+import catchAsync from '../utils/catchAsync.js';
 // helpers
 const signToken = (payload) => jwt.sign(payload, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRATION,
@@ -21,28 +22,27 @@ const auth = async (req, res, next) => {
         next();
     })(req, res, next);
 };
-const signUp = async (req, res, next) => {
-    try {
-        const { body } = req;
-        const { email, name, password } = body;
-        // 1. Create a user
-        const user = await User.create({
-            name,
-            email,
-            password,
-            verificationToken: nanoid(),
-        });
-        // 2. Send verification email
-        sendEmail(url(user.verificationToken, req), email);
-        res.status(201).json({
-            status: 'success',
-            message: 'Account created. Please check your email to verify your account and log in afterwards!',
-        });
-    }
-    catch (err) {
-        res.status(400).json({ status: 'fail', message: err.message });
-    }
-};
+const signUp = catchAsync(async (req, res, next) => {
+    const { body } = req;
+    const { email, name, password } = body;
+    // 1. Create a user
+    const user = await User.create({
+        name,
+        email,
+        password,
+        verificationToken: nanoid(),
+    });
+    if (!user.verificationToken)
+        return res
+            .status(400)
+            .json({ status: 'fail', message: 'Something went wrong' });
+    // 2. Send verification email
+    sendEmail(url(user.verificationToken, req), email);
+    res.status(201).json({
+        status: 'success',
+        message: 'Account created. Please check your email to verify your account and log in afterwards!',
+    });
+});
 const signIn = async (req, res, next) => {
     try {
         const { email, password } = req.body;
@@ -95,7 +95,6 @@ const verifyUser = async (req, res, next) => {
     try {
         const { verificationToken } = req.params;
         const user = await User.findOne({ verificationToken });
-        console.log(user);
         if (!user)
             return res
                 .status(404)
@@ -103,7 +102,6 @@ const verifyUser = async (req, res, next) => {
         user.verify = true;
         user.verificationToken = null;
         await user.save();
-        console.log(user);
         res.status(200).json({
             status: 'success',
             message: 'Verification successful. You can low log in!',
@@ -124,6 +122,10 @@ const resendVerificationEmail = async (req, res, next) => {
                 status: 'fail',
                 message: 'Verification has already been passed',
             });
+        if (!user.verificationToken)
+            return res
+                .status(400)
+                .json({ status: 'fail', message: 'Something went wrong' });
         sendEmail(url(user.verificationToken, req), email);
         res
             .status(200)

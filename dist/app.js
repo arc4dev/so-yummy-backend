@@ -1,12 +1,12 @@
-import express from 'express';
 import dotenv from 'dotenv';
+dotenv.config();
+import express from 'express';
 import morgan from 'morgan';
 import cors from 'cors';
 import errorController from './controllers/errorController.js';
 import recipeRouter from './routes/recipeRouter.js';
 import authRouter from './routes/authRouter.js';
 import userRouter from './routes/userRouter.js';
-dotenv.config();
 const app = express();
 // Middlewares
 app.use(morgan(app.get('env') === 'development' ? 'dev' : 'short'));
