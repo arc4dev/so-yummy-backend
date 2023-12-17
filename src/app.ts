@@ -1,12 +1,15 @@
-import express, { NextFunction, Request, Response } from 'express';
 import dotenv from 'dotenv';
+dotenv.config();
+
+import express, { NextFunction, Request, Response } from 'express';
 import morgan from 'morgan';
 import cors from 'cors';
 
 import errorController from './controllers/errorController.js';
-import Recipe from './models/recipeModel.js';
+import recipeRouter from './routes/recipeRouter.js';
+import authRouter from './routes/authRouter.js';
+import userRouter from './routes/userRouter.js';
 
-dotenv.config();
 const app = express();
 
 // Middlewares
@@ -16,12 +19,9 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Routes
-app.use('/api/recipes', async (req, res) => {
-  res.json({
-    message: 'success',
-    data: null,
-  });
-});
+app.use('/api/auth', authRouter);
+app.use('/api/users', userRouter);
+app.use('/api/recipes', recipeRouter);
 
 // Handle not defined routes
 app.all('*', (req: Request, res: Response, next: NextFunction) => {
