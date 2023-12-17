@@ -1,36 +1,44 @@
-// const jwt = require('jsonwebtoken');
-const { nanoid } = require('nanoid');
-const passport = require('../config/config-passport.js');
+import { Request, RequestHandler } from 'express';
+import { nanoid } from 'nanoid';
+import mongoose from 'mongoose';
+import passport from '../config/config-passport.js';
+import jwt from 'jsonwebtoken';
 
-const User = require('../models/userModel.js');
-const jwt = require('jsonwebtoken');
-const { sendEmail } = require('../utils/sendEmailHelper.js');
+import User from '../models/userModel.js';
+import { sendEmail } from '../utils/sendEmail.js';
 
 // helpers
-const signToken = (payload) =>
-  jwt.sign(payload, process.env.JWT_SECRET, {
+const signToken = (payload: {
+  id: mongoose.Types.ObjectId;
+  username: string;
+}) =>
+  jwt.sign(payload, process.env.JWT_SECRET!, {
     expiresIn: process.env.JWT_EXPIRATION,
   });
 
-const url = (verificationToken, req) =>
+const url = (verificationToken: string, req: Request) =>
   `${req.protocol}://${req.get('host')}/api/auth/verify/${verificationToken}`;
 
 // Controller
-const auth = async (req, res, next) => {
-  await passport.authenticate('jwt', { session: false }, async (err, user) => {
-    if (!user || err) {
-      return res.status(401).json({
-        status: 'fail',
-        message: 'Unauthorized',
-      });
-    }
+const auth: RequestHandler = async (req, res, next) => {
+  await passport.authenticate(
+    'jwt',
+    { session: false },
+    async (err: any, user: Express.User | undefined) => {
+      if (!user || err) {
+        return res.status(401).json({
+          status: 'fail',
+          message: 'Unauthorized',
+        });
+      }
 
-    req.user = user;
-    next();
-  })(req, res, next);
+      req.user = user;
+      next();
+    }
+  )(req, res, next);
 };
 
-const signUp = async (req, res, next) => {
+const signUp: RequestHandler = async (req, res, next) => {
   try {
     const { body } = req;
     const { email, name, password } = body;
@@ -56,18 +64,16 @@ const signUp = async (req, res, next) => {
   }
 };
 
-const signIn = async (req, res, next) => {
+const signIn: RequestHandler = async (req, res, next) => {
   try {
     const { email, password } = req.body;
 
     // 1. Check if password and email are provided
     if (!email || !password)
-      return res
-        .status(400)
-        .json({
-          status: 'fail',
-          message: 'Please provide an email or password',
-        });
+      return res.status(400).json({
+        status: 'fail',
+        message: 'Please provide an email or password',
+      });
 
     // 2. Check if user exists and password is correct
     const user = await User.findOne({
@@ -75,12 +81,10 @@ const signIn = async (req, res, next) => {
     }).select('password email verify name');
 
     if (!user || !(await user.isCorrectPassword(password, user.password)))
-      return res
-        .status(400)
-        .json({
-          status: 'fail',
-          message: 'The email or password is incorrect!',
-        });
+      return res.status(400).json({
+        status: 'fail',
+        message: 'The email or password is incorrect!',
+      });
 
     // 3. Check if user verified his account
     if (!user.verify)
@@ -104,22 +108,8 @@ const signIn = async (req, res, next) => {
   }
 };
 
-const restrictTo = (role) => (req, res, next) => {
-  if (role !== req.user.role)
-    return res
-      .status(401)
-      .json({
-        status: 'fail',
-        message: 'You do not have permission to acces this route!',
-      });
-
-  next();
-};
-
-const signOut = async (req, res, next) => {
+const signOut: RequestHandler = async (req, res, next) => {
   try {
-    // wylogowaniem musi byc dodanie tokena do czanrje listy i przy funkcji auth sprawdzanie czy token nalezy do tej listy
-
     res.status(200).json({
       status: 'success',
     });
@@ -128,7 +118,7 @@ const signOut = async (req, res, next) => {
   }
 };
 
-const verifyUser = async (req, res, next) => {
+const verifyUser: RequestHandler = async (req, res, next) => {
   try {
     const { verificationToken } = req.params;
 
@@ -146,18 +136,16 @@ const verifyUser = async (req, res, next) => {
     await user.save();
     console.log(user);
 
-    res
-      .status(200)
-      .json({
-        status: 'success',
-        message: 'Verification successful. You can low log in!',
-      });
+    res.status(200).json({
+      status: 'success',
+      message: 'Verification successful. You can low log in!',
+    });
   } catch (err) {
     res.status(400).send({ status: 'fail', message: err.message });
   }
 };
 
-const resendVerificationEmail = async (req, res, next) => {
+const resendVerificationEmail: RequestHandler = async (req, res, next) => {
   try {
     const { email } = req.body;
     const user = await User.findOne({
@@ -165,12 +153,10 @@ const resendVerificationEmail = async (req, res, next) => {
     });
 
     if (!user || user.verify)
-      return res
-        .status(400)
-        .json({
-          status: 'fail',
-          message: 'Verification has already been passed',
-        });
+      return res.status(400).json({
+        status: 'fail',
+        message: 'Verification has already been passed',
+      });
 
     sendEmail(url(user.verificationToken, req), email);
 
@@ -182,12 +168,11 @@ const resendVerificationEmail = async (req, res, next) => {
   }
 };
 
-module.exports = {
+export default {
   signUp,
   signIn,
   signOut,
   auth,
-  restrictTo,
   verifyUser,
   resendVerificationEmail,
 };

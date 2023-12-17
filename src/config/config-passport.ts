@@ -1,9 +1,11 @@
-const passport = require('passport');
-const passportJWT = require('passport-jwt');
-const User = require('../models/userModel.js');
+import passport from 'passport';
+import passportJWT from 'passport-jwt';
+import User from '../models/userModel.js';
+
+console.log(process.env.JWT_SECRET);
 
 const ExtractJWT = passportJWT.ExtractJwt;
-const Strategy = passportJWT.Strategy;
+const Strategy = passportJWT.Strategy!;
 const params = {
   secretOrKey: process.env.JWT_SECRET,
   jwtFromRequest: ExtractJWT.fromAuthHeaderAsBearerToken(),
@@ -17,10 +19,11 @@ passport.use(
         if (!user) {
           return done(new Error('User not found'));
         }
+
         return done(null, user);
       })
       .catch((err) => done(err));
   })
 );
 
-module.exports = passport;
+export default passport;
