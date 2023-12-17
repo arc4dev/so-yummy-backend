@@ -32,10 +32,10 @@ userSchema.pre('save', async function (next) {
     next();
 });
 // Exclude fields before find
-userSchema.pre(/^find/, function (next) {
-    this.select('-password -verify -verificationToken');
-    next();
-});
+// userSchema.pre(/^find/, function (next) {
+//   this.select('-password -verify -verificationToken');
+//   next();
+// });
 // Method to check if password is correct
 userSchema.methods.isCorrectPassword = async function (passwordToCheck, userPassword) {
     return await bcrypt.compare(passwordToCheck, userPassword);
