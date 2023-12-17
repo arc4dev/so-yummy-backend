@@ -1,5 +1,5 @@
-const mongoose = require('mongoose');
-const bcrypt = require('bcrypt');
+import mongoose from 'mongoose';
+import bcrypt from 'bcrypt';
 
 const userSchema = new mongoose.Schema({
   email: {
@@ -16,14 +16,6 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: null,
     required: [true, 'Name is require'],
-  },
-  role: {
-    type: String,
-    enum: {
-      values: ['user', 'admin'],
-      message: 'The role must be either user or admin',
-    },
-    default: 'user',
   },
   verify: {
     type: Boolean,
@@ -45,16 +37,19 @@ userSchema.pre('save', async function (next) {
 
 // Exclude fields before find
 userSchema.pre(/^find/, function (next) {
-  this.select('-password -verify -verifi');
+  this.select('-password -verify -verificationToken');
 
   next();
 });
 
 // Method to check if password is correct
-userSchema.methods.isCorrectPassword = async function (passwordToCheck, userPassword) {
+userSchema.methods.isCorrectPassword = async function (
+  passwordToCheck,
+  userPassword
+) {
   return await bcrypt.compare(passwordToCheck, userPassword);
 };
 
 const User = mongoose.model('User', userSchema);
 
-module.exports = User;
+export default User;

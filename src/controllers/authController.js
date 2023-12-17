@@ -7,7 +7,7 @@ const jwt = require('jsonwebtoken');
 const { sendEmail } = require('../utils/sendEmailHelper.js');
 
 // helpers
-const signToken = payload =>
+const signToken = (payload) =>
   jwt.sign(payload, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRATION,
   });
@@ -64,7 +64,10 @@ const signIn = async (req, res, next) => {
     if (!email || !password)
       return res
         .status(400)
-        .json({ status: 'fail', message: 'Please provide an email or password' });
+        .json({
+          status: 'fail',
+          message: 'Please provide an email or password',
+        });
 
     // 2. Check if user exists and password is correct
     const user = await User.findOne({
@@ -74,11 +77,16 @@ const signIn = async (req, res, next) => {
     if (!user || !(await user.isCorrectPassword(password, user.password)))
       return res
         .status(400)
-        .json({ status: 'fail', message: 'The email or password is incorrect!' });
+        .json({
+          status: 'fail',
+          message: 'The email or password is incorrect!',
+        });
 
     // 3. Check if user verified his account
     if (!user.verify)
-      return res.status(400).json({ status: 'fail', message: 'Please verify your email first!' });
+      return res
+        .status(400)
+        .json({ status: 'fail', message: 'Please verify your email first!' });
 
     // 4. If everything is ok, send token to client
     const token = signToken({
@@ -96,11 +104,14 @@ const signIn = async (req, res, next) => {
   }
 };
 
-const restrictTo = role => (req, res, next) => {
+const restrictTo = (role) => (req, res, next) => {
   if (role !== req.user.role)
     return res
       .status(401)
-      .json({ status: 'fail', message: 'You don not have permission to acces this route!' });
+      .json({
+        status: 'fail',
+        message: 'You do not have permission to acces this route!',
+      });
 
   next();
 };
@@ -124,7 +135,10 @@ const verifyUser = async (req, res, next) => {
     const user = await User.findOne({ verificationToken });
     console.log(user);
 
-    if (!user) return res.status(404).json({ status: 'fail', message: 'User not found' });
+    if (!user)
+      return res
+        .status(404)
+        .json({ status: 'fail', message: 'User not found' });
 
     user.verify = true;
     user.verificationToken = null;
@@ -134,7 +148,10 @@ const verifyUser = async (req, res, next) => {
 
     res
       .status(200)
-      .json({ status: 'success', message: 'Verification successful. You can low log in!' });
+      .json({
+        status: 'success',
+        message: 'Verification successful. You can low log in!',
+      });
   } catch (err) {
     res.status(400).send({ status: 'fail', message: err.message });
   }
@@ -150,11 +167,16 @@ const resendVerificationEmail = async (req, res, next) => {
     if (!user || user.verify)
       return res
         .status(400)
-        .json({ status: 'fail', message: 'Verification has already been passed' });
+        .json({
+          status: 'fail',
+          message: 'Verification has already been passed',
+        });
 
     sendEmail(url(user.verificationToken, req), email);
 
-    res.status(200).json({ status: 'success', message: 'Verification email sent' });
+    res
+      .status(200)
+      .json({ status: 'success', message: 'Verification email sent' });
   } catch (err) {
     res.status(400).send({ status: 'fail', message: err.message });
   }

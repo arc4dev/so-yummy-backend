@@ -4,6 +4,7 @@ import morgan from 'morgan';
 import cors from 'cors';
 
 import errorController from './controllers/errorController.js';
+import Recipe from './models/recipeModel.js';
 
 dotenv.config();
 const app = express();
@@ -15,8 +16,11 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Routes
-app.use('/api', (req, res) => {
-  res.json({ message: 'Yeey' });
+app.use('/api/recipes', async (req, res) => {
+  res.json({
+    message: 'success',
+    data: null,
+  });
 });
 
 // Handle not defined routes

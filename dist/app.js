@@ -11,8 +11,11 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 // Routes
-app.use('/api', (req, res) => {
-    res.json({ message: 'Yeey' });
+app.use('/api/recipes', async (req, res) => {
+    res.json({
+        message: 'success',
+        data: null,
+    });
 });
 // Handle not defined routes
 app.all('*', (req, res, next) => {
