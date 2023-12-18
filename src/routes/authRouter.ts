@@ -7,7 +7,7 @@ authRouter.post('/sign-up', authController.signUp);
 
 authRouter.post('/sign-in', authController.signIn);
 
-authRouter.post('/sign-out', authController.signOut);
+authRouter.post('/sign-out', authController.auth, authController.signOut);
 
 authRouter.post('/verify', authController.resendVerificationEmail);
 

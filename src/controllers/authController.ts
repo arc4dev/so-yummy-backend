@@ -56,10 +56,13 @@ const signUp: RequestHandler = catchAsync(async (req, res, next) => {
     verificationToken: nanoid(),
   });
 
-  if (!user.verificationToken)
+  if (!user.verificationToken) {
+    await user.deleteOne();
+
     return res
       .status(400)
       .json({ status: 'fail', message: 'Something went wrong' });
+  }
 
   // 2. Send verification email
   sendEmail(url(user.verificationToken, req), email);
@@ -83,7 +86,7 @@ const signIn: RequestHandler = catchAsync(async (req, res, next) => {
   // 2. Check if user exists and password is correct
   const user = await User.findOne({
     email,
-  }).select('password email verify name');
+  }).select('+password +verify');
 
   if (!user || !(await user.isCorrectPassword(password, user.password)))
     return res.status(400).json({
@@ -111,23 +114,13 @@ const signIn: RequestHandler = catchAsync(async (req, res, next) => {
 });
 
 const signOut: RequestHandler = catchAsync(async (req, res, next) => {
-  const user = req.user as UserDocument;
-
-  if (!user)
-    return res
-      .status(400)
-      .json({ status: 'fail', message: 'User is not logged in!' });
-
-  signToken(
-    {
-      id: user.id,
-      username: user.email,
-    },
-    true
-  );
+  // We cannot log out user because we use JWT
+  // Black listing JWT is not a good idea
+  // We can only delete the token from the client
 
   res.status(200).json({
     status: 'success',
+    message: 'User logged out',
   });
 });
 
@@ -155,7 +148,7 @@ const resendVerificationEmail: RequestHandler = catchAsync(
     const { email } = req.body;
     const user = await User.findOne({
       email,
-    });
+    }).select('+verify +verificationToken');
 
     if (!user || user.verify)
       return res.status(400).json({
