@@ -1,16 +1,6 @@
 import mongoose from 'mongoose';
 import bcrypt from 'bcrypt';
 
-interface UserDocument extends mongoose.Document {
-  id: mongoose.Types.ObjectId;
-  email: string;
-  password: string;
-  name: string;
-  verify: boolean;
-  verificationToken?: string | null;
-  isCorrectPassword(password: string, hashedPassword: string): Promise<boolean>;
-}
-
 const userSchema = new mongoose.Schema<UserDocument>({
   email: {
     type: String,

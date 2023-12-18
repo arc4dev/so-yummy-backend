@@ -6,7 +6,7 @@ import passportJWT from 'passport-jwt';
 import User from '../models/userModel.js';
 
 const ExtractJWT = passportJWT.ExtractJwt;
-const Strategy = passportJWT.Strategy!;
+const Strategy = passportJWT.Strategy;
 const params = {
   secretOrKey: process.env.JWT_SECRET,
   jwtFromRequest: ExtractJWT.fromAuthHeaderAsBearerToken(),

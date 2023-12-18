@@ -6,5 +6,5 @@ export default (
   res: Response,
   next: NextFunction
 ) => {
-  res.status(500).json({ message: err.message });
+  res.status(500).json({ status: 'fail', message: err.message });
 };
