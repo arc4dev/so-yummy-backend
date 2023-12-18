@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import bcrypt from 'bcrypt';
+import { Query } from 'mongoose';
 
 const userSchema = new mongoose.Schema<UserDocument>({
   email: {
@@ -11,6 +12,7 @@ const userSchema = new mongoose.Schema<UserDocument>({
     type: String,
     trim: true,
     required: [true, 'Password is required'],
+    select: false,
   },
   name: {
     type: String,
@@ -20,9 +22,11 @@ const userSchema = new mongoose.Schema<UserDocument>({
   verify: {
     type: Boolean,
     default: false,
+    select: false,
   },
   verificationToken: {
     type: String,
+    select: false,
   },
 });
 
@@ -34,13 +38,6 @@ userSchema.pre('save', async function (next) {
 
   next();
 });
-
-// Exclude fields before find
-// userSchema.pre(/^find/, function (next) {
-//   this.select('-password -verify -verificationToken');
-
-//   next();
-// });
 
 // Method to check if password is correct
 userSchema.methods.isCorrectPassword = async function (

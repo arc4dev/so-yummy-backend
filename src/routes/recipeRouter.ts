@@ -9,11 +9,11 @@ recipeRouter.use(authController.auth);
 
 recipeRouter.route('/').post(recipeController.addNewRecipe);
 
+recipeRouter.get('/categories', recipeController.getAllRecipeCategories);
+
 recipeRouter
   .route('/:recipeId')
   .delete(recipeController.deleteRecipe)
   .get(recipeController.getRecipeById);
-
-recipeRouter.get('/categories', recipeController.getAllRecipeCategories);
 
 export default recipeRouter;
