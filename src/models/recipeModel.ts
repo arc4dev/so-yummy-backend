@@ -14,25 +14,30 @@ const recipeSchema = new mongoose.Schema({
   strInstructions: {
     type: String,
     required: [true, "The 'strInstructions' field is required."],
+    select: false,
   },
-  ingredients: [
-    {
-      ingredientName: {
-        type: String,
-        required: [
-          true,
-          "The 'ingredientName' field in 'ingredients' is required.",
-        ],
+  ingredients: {
+    type: [
+      {
+        _id: false,
+        ingredientName: {
+          type: String,
+          required: [
+            true,
+            "The 'ingredientName' field in 'ingredients' is required.",
+          ],
+        },
+        ingredientMeasure: {
+          type: String,
+          required: [
+            true,
+            "The 'ingredientMeasure' field in 'ingredients' is required.",
+          ],
+        },
       },
-      ingredientMeasure: {
-        type: String,
-        required: [
-          true,
-          "The 'ingredientMeasure' field in 'ingredients' is required.",
-        ],
-      },
-    },
-  ],
+    ],
+    select: false,
+  },
   category: {
     type: String,
     enum: {
@@ -41,6 +46,7 @@ const recipeSchema = new mongoose.Schema({
         ', '
       )}.`,
     },
+    select: false,
   },
 });
 

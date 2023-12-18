@@ -7,7 +7,17 @@ const recipeRouter = express.Router();
 // Auth before all requests
 recipeRouter.use(authController.auth);
 
-recipeRouter.route('/').post(recipeController.addNewRecipe);
+recipeRouter
+  .route('/')
+  .get(recipeController.getRecipes)
+  .post(recipeController.addNewRecipe);
+
+recipeRouter.get('/search/:query', recipeController.getRecipesByQuery);
+
+recipeRouter.get(
+  '/ingredient/:ingredient',
+  recipeController.getRecipesByIngredient
+);
 
 recipeRouter.get('/categories', recipeController.getAllRecipeCategories);
 
