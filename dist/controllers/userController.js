@@ -1,26 +1,18 @@
 import User from '../models/userModel.js';
-const getCurrentUser = async (req, res, next) => {
-    try {
-        const { id } = req.user; // to fix
-        if (!id)
-            return res
-                .status(404)
-                .json({ status: 'fail', message: 'User not found' });
-        const user = await User.findById(id);
-        if (!user) {
-            return res
-                .status(404)
-                .json({ status: 'fail', message: 'User not found' });
-        }
-        res.status(200).json({
-            status: 'success',
-            data: user,
-        });
+import catchAsync from '../utils/catchAsync.js';
+const getCurrentUser = catchAsync(async (req, res, next) => {
+    const { id } = req.user; // to fix
+    if (!id)
+        return res.status(404).json({ status: 'fail', message: 'User not found' });
+    const user = await User.findById(id);
+    if (!user) {
+        return res.status(404).json({ status: 'fail', message: 'User not found' });
     }
-    catch (err) {
-        res.status(400).json({ status: 'fail', message: err.message });
-    }
-};
+    res.status(200).json({
+        status: 'success',
+        data: user,
+    });
+});
 export default {
     getCurrentUser,
 };

@@ -9,35 +9,40 @@ import { sendEmail } from '../utils/sendEmail.js';
 import catchAsync from '../utils/catchAsync.js';
 
 // helpers
-const signToken = (payload: {
-  id: mongoose.Types.ObjectId;
-  username: string;
-}) =>
+const signToken = (
+  payload: {
+    id: mongoose.Types.ObjectId;
+    username: string;
+  },
+  isLogout = false
+) =>
   jwt.sign(payload, process.env.JWT_SECRET!, {
-    expiresIn: process.env.JWT_EXPIRATION,
+    expiresIn: isLogout
+      ? process.env.JWT_EXPIRATION_LOGOUT
+      : process.env.JWT_EXPIRATION,
   });
 
 const url = (verificationToken: string, req: Request) =>
   `${req.protocol}://${req.get('host')}/api/auth/verify/${verificationToken}`;
 
 // Controller
-const auth: RequestHandler = async (req, res, next) => {
+const auth: RequestHandler = catchAsync(async (req, res, next) => {
   await passport.authenticate(
     'jwt',
     { session: false },
-    async (err: any, user: Express.User | undefined) => {
+    async (err: Error | null, user: UserDocument | false) => {
       if (!user || err) {
         return res.status(401).json({
           status: 'fail',
           message: 'Unauthorized',
         });
       }
-
+      console.log(user);
       req.user = user;
       next();
     }
   )(req, res, next);
-};
+});
 
 const signUp: RequestHandler = catchAsync(async (req, res, next) => {
   const { body } = req;
@@ -61,92 +66,92 @@ const signUp: RequestHandler = catchAsync(async (req, res, next) => {
 
   res.status(201).json({
     status: 'success',
-    message:
-      'Account created. Please check your email to verify your account and log in afterwards!',
+    message: 'Account created. Please check your email to verify your account!',
   });
 });
 
-const signIn: RequestHandler = async (req, res, next) => {
-  try {
-    const { email, password } = req.body;
+const signIn: RequestHandler = catchAsync(async (req, res, next) => {
+  const { email, password } = req.body;
 
-    // 1. Check if password and email are provided
-    if (!email || !password)
-      return res.status(400).json({
-        status: 'fail',
-        message: 'Please provide an email or password',
-      });
+  // 1. Check if password and email are provided
+  if (!email || !password)
+    return res.status(400).json({
+      status: 'fail',
+      message: 'Please provide an email or password',
+    });
 
-    // 2. Check if user exists and password is correct
-    const user = await User.findOne({
-      email,
-    }).select('password email verify name');
+  // 2. Check if user exists and password is correct
+  const user = await User.findOne({
+    email,
+  }).select('password email verify name');
 
-    if (!user || !(await user.isCorrectPassword(password, user.password)))
-      return res.status(400).json({
-        status: 'fail',
-        message: 'The email or password is incorrect!',
-      });
+  if (!user || !(await user.isCorrectPassword(password, user.password)))
+    return res.status(400).json({
+      status: 'fail',
+      message: 'The email or password is incorrect!',
+    });
 
-    // 3. Check if user verified his account
-    if (!user.verify)
-      return res
-        .status(400)
-        .json({ status: 'fail', message: 'Please verify your email first!' });
+  // 3. Check if user verified his account
+  if (!user.verify)
+    return res
+      .status(400)
+      .json({ status: 'fail', message: 'Please verify your email first!' });
 
-    // 4. If everything is ok, send token to client
-    const token = signToken({
+  // 4. If everything is ok, send the token to client
+  const token = signToken({
+    id: user.id,
+    username: email,
+  });
+
+  res.status(200).json({
+    status: 'success',
+    data: { email: user.email, name: user.name },
+    token,
+  });
+});
+
+const signOut: RequestHandler = catchAsync(async (req, res, next) => {
+  const user = req.user as UserDocument;
+
+  if (!user)
+    return res
+      .status(400)
+      .json({ status: 'fail', message: 'User is not logged in!' });
+
+  signToken(
+    {
       id: user.id,
-      username: email,
-    });
+      username: user.email,
+    },
+    true
+  );
 
-    res.status(200).json({
-      status: 'success',
-      data: { email: user.email, name: user.name },
-      token,
-    });
-  } catch (err) {
-    res.status(400).json({ status: 'fail', message: (err as Error).message });
-  }
-};
+  res.status(200).json({
+    status: 'success',
+  });
+});
 
-const signOut: RequestHandler = async (req, res, next) => {
-  try {
-    res.status(200).json({
-      status: 'success',
-    });
-  } catch (err) {
-    res.status(400).json({ status: 'fail', message: (err as Error).message });
-  }
-};
+const verifyUser: RequestHandler = catchAsync(async (req, res, next) => {
+  const { verificationToken } = req.params;
 
-const verifyUser: RequestHandler = async (req, res, next) => {
-  try {
-    const { verificationToken } = req.params;
+  const user = await User.findOne({ verificationToken });
 
-    const user = await User.findOne({ verificationToken });
+  if (!user)
+    return res.status(404).json({ status: 'fail', message: 'User not found' });
 
-    if (!user)
-      return res
-        .status(404)
-        .json({ status: 'fail', message: 'User not found' });
+  user.verify = true;
+  user.verificationToken = null;
 
-    user.verify = true;
-    user.verificationToken = null;
+  await user.save();
 
-    await user.save();
+  res.status(200).json({
+    status: 'success',
+    message: 'Verification successful. You can low log in!',
+  });
+});
 
-    res.status(200).json({
-      status: 'success',
-      message: 'Verification successful. You can low log in!',
-    });
-  } catch (err) {
-    res.status(400).send({ status: 'fail', message: (err as Error).message });
-  }
-};
-
-const resendVerificationEmail: RequestHandler = async (req, res, next) => {
-  try {
+const resendVerificationEmail: RequestHandler = catchAsync(
+  async (req, res, next) => {
     const { email } = req.body;
     const user = await User.findOne({
       email,
@@ -168,10 +173,8 @@ const resendVerificationEmail: RequestHandler = async (req, res, next) => {
     res
       .status(200)
       .json({ status: 'success', message: 'Verification email sent' });
-  } catch (err) {
-    res.status(400).send({ status: 'fail', message: (err as Error).message });
   }
-};
+);
 
 export default {
   signUp,

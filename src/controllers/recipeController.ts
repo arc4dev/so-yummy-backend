@@ -1,54 +1,61 @@
 import { RequestHandler } from 'express';
 import Recipe from '../models/recipeModel.js';
+import catchAsync from '../utils/catchAsync.js';
 
-const addNewRecipe: RequestHandler = async (req, res, next) => {
-  try {
-    const {} = req.body;
+const addNewRecipe: RequestHandler = catchAsync(async (req, res, next) => {
+  const {} = req.body;
 
-    const newRecipe = await Recipe.create({});
+  const newRecipe = await Recipe.create({});
 
-    res.status(201).json({ status: 'success', data: newRecipe });
-  } catch (err) {
-    res.status(400).json({ status: 'fail', message: (err as Error).message });
-  }
-};
+  res.status(201).json({ status: 'success', data: newRecipe });
+});
 
-const deleteRecipe: RequestHandler = async (req, res, next) => {
-  try {
-    const transaction = await Recipe.findByIdAndDelete(req.params.recipeId);
+const deleteRecipe: RequestHandler = catchAsync(async (req, res, next) => {
+  const recipe = await Recipe.findByIdAndDelete(req.params.recipeId);
 
-    if (!transaction)
-      return res.status(404).json({
-        status: 'fail',
-        message: 'Transaction not found',
-      });
-
-    res.status(204).json({
-      status: 'success',
-      data: null,
+  if (!recipe)
+    return res.status(404).json({
+      status: 'fail',
+      message: 'Recipe not found',
     });
-  } catch (err) {
-    res.status(400).json({ status: 'fail', message: (err as Error).message });
-  }
-};
+
+  res.status(204).json({
+    status: 'success',
+    data: null,
+  });
+});
+
+const getRecipeById: RequestHandler = catchAsync(async (req, res, next) => {
+  const recipe = await Recipe.findById(req.params.recipeId);
+
+  if (!recipe)
+    return res.status(404).json({
+      status: 'fail',
+      message: 'Recipe not found',
+    });
+
+  res.status(200).json({
+    status: 'success',
+    data: recipe,
+  });
+});
 
 // re think updating a recipe
 
-const getAllRecipeCategories: RequestHandler = async (req, res, next) => {
-  try {
-    const categories = await Recipe.distinct('category');
+const getAllRecipeCategories: RequestHandler = catchAsync(
+  async (req, res, next) => {
+    const categories = ['yey'];
 
     return res.status(200).json({
       status: 'success',
       data: categories,
     });
-  } catch (err) {
-    res.status(400).json({ status: 'fail', message: (err as Error).message });
   }
-};
+);
 
 export default {
   addNewRecipe,
+  getRecipeById,
   deleteRecipe,
   getAllRecipeCategories,
 };

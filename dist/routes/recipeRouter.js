@@ -5,6 +5,9 @@ const recipeRouter = express.Router();
 // Auth before all requests
 recipeRouter.use(authController.auth);
 recipeRouter.route('/').post(recipeController.addNewRecipe);
-recipeRouter.route('/:recipeId').delete(recipeController.deleteRecipe);
+recipeRouter
+    .route('/:recipeId')
+    .delete(recipeController.deleteRecipe)
+    .get(recipeController.getRecipeById);
 recipeRouter.get('/categories', recipeController.getAllRecipeCategories);
 export default recipeRouter;
