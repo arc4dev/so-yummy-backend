@@ -9,8 +9,8 @@ authRouter.post('/sign-in', authController.signIn);
 
 authRouter.post('/sign-out', authController.signOut);
 
-authRouter.get('/verify/:verificationToken', authController.verifyUser);
-
 authRouter.post('/verify', authController.resendVerificationEmail);
+
+authRouter.get('/verify/:verificationToken', authController.verifyUser);
 
 export default authRouter;

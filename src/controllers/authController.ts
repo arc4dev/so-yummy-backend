@@ -37,7 +37,7 @@ const auth: RequestHandler = catchAsync(async (req, res, next) => {
           message: 'Unauthorized',
         });
       }
-      console.log(user);
+
       req.user = user;
       next();
     }
