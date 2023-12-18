@@ -59,3 +59,9 @@ export default {
   deleteRecipe,
   getAllRecipeCategories,
 };
+
+// getByCategory
+// getByQuery
+// getByIngredient
+
+// addOwnRecipe
