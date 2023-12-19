@@ -19,21 +19,14 @@ const recipeSchema = new mongoose.Schema({
   ingredients: {
     type: [
       {
-        _id: false,
-        ingredientName: {
-          type: String,
-          required: [
-            true,
-            "The 'ingredientName' field in 'ingredients' is required.",
-          ],
+        ingredient: {
+          type: mongoose.Types.ObjectId,
+          ref: 'Ingredient',
         },
         ingredientMeasure: {
           type: String,
-          required: [
-            true,
-            "The 'ingredientMeasure' field in 'ingredients' is required.",
-          ],
         },
+        _id: false,
       },
     ],
     select: false,

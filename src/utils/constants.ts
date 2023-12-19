@@ -1,4 +1,5 @@
 export const RECIPE_CATEGORIES = [
+  'Breakfast',
   'Beef',
   'Chicken',
   'Dessert',
