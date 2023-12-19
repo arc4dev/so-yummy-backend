@@ -11,3 +11,5 @@ export const RECIPE_CATEGORIES = [
   'Starter',
   'Vegetarian',
 ];
+
+export const RECIPES_PER_PAGE = 8;
