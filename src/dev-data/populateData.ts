@@ -3,15 +3,11 @@ import dotenv from 'dotenv';
 import Recipe from '../models/recipeModel.js';
 import Ingredient from '../models/IngredientModel.js';
 import { RECIPES_DATA } from './recipes.js';
+import connectDB from '../utils/connectDB.js';
 
 dotenv.config();
 
-mongoose
-  .connect(
-    `mongodb+srv://${process.env.DB_USERNAME}:${process.env.DB_PASSWORD}@cluster0.xbudkcm.mongodb.net/so-yummy`
-  )
-  .then(() => console.log('Database connection successful!'))
-  .catch(() => process.exit(1));
+await connectDB();
 
 async function populateDatabase(recipes: any[]) {
   try {

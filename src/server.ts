@@ -5,15 +5,10 @@ process.on('uncaughtException', (err) => {
 });
 
 import app from './app.js';
-import mongoose from 'mongoose';
+import connectDB from './utils/connectDB.js';
 
 // Database connection
-mongoose
-  .connect(
-    `mongodb+srv://${process.env.DB_USERNAME}:${process.env.DB_PASSWORD}@cluster0.xbudkcm.mongodb.net/so-yummy`
-  )
-  .then(() => console.log('Database connection successful!'))
-  .catch(() => process.exit(1));
+await connectDB();
 
 // Server launching
 const PORT = process.env.PORT || 3001;

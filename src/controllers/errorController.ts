@@ -1,5 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
 
+// TODO - App Error
+
 export default (
   err: Error,
   req: Request,

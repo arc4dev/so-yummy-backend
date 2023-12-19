@@ -10,7 +10,7 @@ recipeRouter.use(authController.auth);
 recipeRouter
   .route('/')
   .get(recipeController.getRecipes)
-  .post(recipeController.addNewRecipe);
+  .post(recipeController.addOwnRecipe);
 
 recipeRouter.get('/search/:query', recipeController.getRecipesByQuery);
 
@@ -23,7 +23,7 @@ recipeRouter.get('/categories', recipeController.getAllRecipeCategories);
 
 recipeRouter
   .route('/:recipeId')
-  .delete(recipeController.deleteRecipe)
+  .delete(authController.restrictTo('admin'), recipeController.deleteRecipe)
   .get(recipeController.getRecipeById);
 
 export default recipeRouter;

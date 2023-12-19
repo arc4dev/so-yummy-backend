@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 
-const ingredientSchema = new mongoose.Schema({
+const ingredientSchema = new mongoose.Schema<IngredientDocument>({
   name: {
     type: String,
     required: [true, "The 'name' field is required."],
@@ -11,6 +11,9 @@ const ingredientSchema = new mongoose.Schema({
   },
 });
 
-const Ingredient = mongoose.model('Ingredient', ingredientSchema);
+const Ingredient = mongoose.model<IngredientDocument>(
+  'Ingredient',
+  ingredientSchema
+);
 
 export default Ingredient;

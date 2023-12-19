@@ -20,6 +20,23 @@ const getCurrentUser: RequestHandler = catchAsync(async (req, res, next) => {
   });
 });
 
+const uploadImage: RequestHandler = catchAsync(async (req, res, next) => {
+  // TODO - Logic
+
+  next();
+});
+
+const updateUser: RequestHandler = catchAsync(async (req, res, next) => {
+  // TODO - Logic
+
+  res.status(200).json({
+    status: 'success',
+    data: null,
+  });
+});
+
 export default {
   getCurrentUser,
+  uploadImage,
+  updateUser,
 };

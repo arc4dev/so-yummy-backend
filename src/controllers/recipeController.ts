@@ -3,17 +3,6 @@ import Recipe from '../models/recipeModel.js';
 import catchAsync from '../utils/catchAsync.js';
 import { RECIPES_PER_PAGE } from '../utils/constants.js';
 
-// Add new recipe
-// We can add visibility field and mark own recipe as a private
-// Creating new route for the user recipes - /my-recipes
-const addNewRecipe: RequestHandler = catchAsync(async (req, res, next) => {
-  const {} = req.body;
-
-  const newRecipe = await Recipe.create({});
-
-  res.status(201).json({ status: 'success', data: newRecipe });
-});
-
 const deleteRecipe: RequestHandler = catchAsync(async (req, res, next) => {
   const recipe = await Recipe.findByIdAndDelete(req.params.recipeId);
 
@@ -131,15 +120,51 @@ const getAllRecipeCategories: RequestHandler = catchAsync(
   }
 );
 
+const addOwnRecipe: RequestHandler = catchAsync(async (req, res, next) => {
+  // TODO - Logic
+  const {} = req.body;
+
+  const newRecipe = await Recipe.create({});
+
+  res.status(201).json({ status: 'success', data: newRecipe });
+});
+
+const deleteOwnRecipe: RequestHandler = catchAsync(async (req, res, next) => {
+  // TODO - Logic
+  const {} = req.body;
+
+  await Recipe.findByIdAndDelete({});
+
+  res.status(201).json({ status: 'success' });
+});
+
+const getOwnRecipes: RequestHandler = catchAsync(async (req, res, next) => {
+  // TODO - Logic
+
+  const recipes = await Recipe.find({});
+
+  res.status(201).json({ status: 'success', data: recipes });
+});
+
+const getFavouriteRecipes: RequestHandler = catchAsync(
+  async (req, res, next) => {
+    // TODO - Logic
+
+    const recipes = await Recipe.find({});
+
+    res.status(201).json({ status: 'success', data: recipes });
+  }
+);
+
 export default {
-  addNewRecipe,
   getRecipeById,
   getRecipesByQuery,
   getRecipesByIngredient,
   getRecipes,
   deleteRecipe,
   getAllRecipeCategories,
+  addOwnRecipe,
+  deleteOwnRecipe,
+  getOwnRecipes,
+  getFavouriteRecipes,
 };
-
-// getByCategory
-// addOwnRecipe
