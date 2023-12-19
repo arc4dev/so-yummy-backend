@@ -113,17 +113,6 @@ const signIn: RequestHandler = catchAsync(async (req, res, next) => {
   });
 });
 
-const signOut: RequestHandler = catchAsync(async (req, res, next) => {
-  // We cannot log out user because we use JWT
-  // Black listing JWT is not a good idea
-  // We can only delete the token from the client
-
-  res.status(200).json({
-    status: 'success',
-    message: 'User logged out',
-  });
-});
-
 const verifyUser: RequestHandler = catchAsync(async (req, res, next) => {
   const { verificationToken } = req.params;
 
@@ -169,6 +158,43 @@ const resendVerificationEmail: RequestHandler = catchAsync(
   }
 );
 
+const forgotPassword: RequestHandler = catchAsync(async (req, res, next) => {
+  // TODO - Logic
+
+  res.status(200).json({ status: 'success', message: 'Forgot password' });
+});
+
+const resetPassword: RequestHandler = catchAsync(async (req, res, next) => {
+  // TODO - Logic
+
+  res.status(200).json({ status: 'success', message: 'Reset password' });
+});
+
+const signOut: RequestHandler = catchAsync(async (req, res, next) => {
+  // ! We cannot log out user because we use JWT !
+  // Black listing JWT tokens is not an optimal solution
+  // We can only delete the token from the client - short expiration time
+
+  res.status(200).json({
+    status: 'success',
+    message: 'User logged out',
+  });
+});
+
+const restrictTo =
+  (...roles: Role[]): RequestHandler =>
+  (req, res, next) => {
+    if (!req.user)
+      return res.status(401).json({ status: 'fail', message: 'Unauthorized' });
+
+    if (!roles.includes((req.user as UserDocument).role))
+      return next(
+        res.status(403).json({ status: 'fail', message: 'Access denied' })
+      );
+
+    next();
+  };
+
 export default {
   signUp,
   signIn,
@@ -176,4 +202,7 @@ export default {
   auth,
   verifyUser,
   resendVerificationEmail,
+  forgotPassword,
+  resetPassword,
+  restrictTo,
 };

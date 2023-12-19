@@ -9,6 +9,10 @@ authRouter.post('/sign-in', authController.signIn);
 
 authRouter.post('/sign-out', authController.auth, authController.signOut);
 
+authRouter.post('/forgot-password', authController.forgotPassword);
+
+authRouter.post('/reset-password', authController.resetPassword);
+
 authRouter.post('/verify', authController.resendVerificationEmail);
 
 authRouter.get('/verify/:verificationToken', authController.verifyUser);
