@@ -40,6 +40,18 @@ const userSchema = new mongoose.Schema<UserDocument>(
   { versionKey: false, timestamps: true }
 );
 
+userSchema.virtual('own-recipes', {
+  ref: 'Recipe',
+  localField: '_id',
+  foreignField: 'owner',
+});
+
+userSchema.virtual('shopping-list', {
+  ref: 'ShoppingListItem',
+  localField: '_id',
+  foreignField: 'owner',
+});
+
 // Hash password before save
 userSchema.pre('save', async function (next) {
   if (!this.isModified('password')) return next();

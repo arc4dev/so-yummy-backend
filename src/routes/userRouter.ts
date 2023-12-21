@@ -15,7 +15,10 @@ userRouter
   .get(recipeController.getOwnRecipes)
   .post(recipeController.addOwnRecipe);
 
-userRouter.route('/my-recipes/:id').delete(recipeController.deleteOwnRecipe);
+userRouter
+  .route('/my-recipes/:id')
+  .get(recipeController.getOwnRecipes)
+  .delete(recipeController.deleteOwnRecipe);
 
 userRouter.get('/favourite-recipes', recipeController.getFavouriteRecipes);
 

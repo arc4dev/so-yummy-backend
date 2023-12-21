@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 
 import Ingredient from './IngredientModel.js';
+import User from './userModel.js';
 
 const shoppingListItemSchema = new mongoose.Schema<ShoppingListItemDocument>(
   {
@@ -16,22 +17,26 @@ const shoppingListItemSchema = new mongoose.Schema<ShoppingListItemDocument>(
     owner: {
       type: mongoose.Schema.ObjectId,
       ref: 'User',
-      required: [true, 'User is required'],
+      required: [true, 'Shopping list item must belong to a user'],
       select: false,
     },
   },
   { versionKey: false, timestamps: true }
 );
 
-// Populate ingredient field with every find query
+// Populate ingredient and owner field with every find query
 shoppingListItemSchema.pre<mongoose.Query<any, any>>(/^find/, function (next) {
-  this.populate('ingredient', 'name image', Ingredient);
+  this.populate('ingredient', 'name image', Ingredient).populate(
+    'owner',
+    'name email',
+    User
+  );
 
   next();
 });
 
 const ShoppingListItem = mongoose.model<ShoppingListItemDocument>(
-  'shoppingListItem',
+  'ShoppingListItem',
   shoppingListItemSchema
 );
 

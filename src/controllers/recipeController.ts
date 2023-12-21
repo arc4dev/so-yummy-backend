@@ -121,7 +121,7 @@ const getAllRecipeCategories: RequestHandler = catchAsync(
 );
 
 const addOwnRecipe: RequestHandler = catchAsync(async (req, res, next) => {
-  // TODO - Logic
+  const { id } = req.user as UserDocument;
   const {} = req.body;
 
   const newRecipe = await Recipe.create({});
