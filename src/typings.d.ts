@@ -17,6 +17,13 @@ enum RecipeCategory {
   Vegetarian = 'Vegetarian',
 }
 
+enum IngredientMeasure {
+  tbs = 'tbs',
+  tsp = 'tsp',
+  kg = 'kg',
+  g = 'g',
+}
+
 // * MODELS *
 interface UserDocument extends mongoose.Document {
   id: mongoose.Types.ObjectId;
@@ -36,7 +43,7 @@ interface IngredientDocument extends mongoose.Document {
 
 interface IngredientRef {
   ingredient: mongoose.Types.ObjectId | IngredientDocument;
-  ingredientMeasure: string;
+  ingredientMeasure: IngredientMeasure;
 }
 
 interface RecipeDocument extends mongoose.Document {
