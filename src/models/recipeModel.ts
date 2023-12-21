@@ -57,7 +57,7 @@ const recipeSchema = new mongoose.Schema<RecipeDocument>({
     validate: {
       validator: function (
         this: RecipeDocument,
-        v: mongoose.Schema.Types.ObjectId | null | undefined
+        v: mongoose.Schema.Types.ObjectId | undefined
       ): boolean {
         return this.visibility === 'private' ? !!v : true;
       },

@@ -46,7 +46,7 @@ interface RecipeDocument extends mongoose.Document {
   ingredients: IngredientRef[];
   category: RecipeCategory;
   visibility: 'public' | 'private';
-  owner: mongoose.Types.ObjectId | UserDocument;
+  owner: mongoose.Types.ObjectId | UserDocument | undefined;
 }
 
 interface ShoppingListItemDocument extends mongoose.Document {
