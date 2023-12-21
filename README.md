@@ -1,6 +1,9 @@
-### Komendy:
+### REST API - SO YUMMY:
 
-- `npm start` &mdash; uruchamia serwer w trybie produkcyjnym
-- `npm run start:dev` &mdash; uruchamia serwer w trybie deweloperskim (development)
-- `npm run lint` &mdash; uruchamia sprawdzanie kodu z ESLint, należy wykonać przed każdym PR i poprawić wszystkie błędy lintera
-- `npm lint:fix` &mdash; to samo co powyższe, ale również automatycznie poprawia proste błędy.
+# How to launch?
+
+- `npm run start:dev`
+
+concurently with the:
+
+- `tsc -w`

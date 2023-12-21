@@ -45,8 +45,7 @@ const auth: RequestHandler = catchAsync(async (req, res, next) => {
 });
 
 const signUp: RequestHandler = catchAsync(async (req, res, next) => {
-  const { body } = req;
-  const { email, name, password } = body;
+  const { email, name, password } = req.body;
 
   // 1. Create a user
   const user = await User.create({
@@ -171,7 +170,7 @@ const resetPassword: RequestHandler = catchAsync(async (req, res, next) => {
 });
 
 const signOut: RequestHandler = catchAsync(async (req, res, next) => {
-  // ! We cannot log out user because we use JWT !
+  // ! We cannot log out user because we use JWT tokens !
   // Black listing JWT tokens is not an optimal solution
   // We can only delete the token from the client - short expiration time
 
