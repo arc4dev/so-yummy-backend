@@ -37,6 +37,7 @@ interface UserDocument extends mongoose.Document {
 }
 
 interface IngredientDocument extends mongoose.Document {
+  id: mongoose.Types.ObjectId;
   name: string;
   image: string;
 }
@@ -47,9 +48,12 @@ interface IngredientRef {
 }
 
 interface RecipeDocument extends mongoose.Document {
+  id: mongoose.Types.ObjectId;
   strMeal: string;
   strMealThumb: string;
   strInstructions: string;
+  strDescription: string;
+  cookingTime: number;
   ingredients: IngredientRef[];
   category: RecipeCategory;
   visibility: 'public' | 'private';
@@ -57,6 +61,7 @@ interface RecipeDocument extends mongoose.Document {
 }
 
 interface ShoppingListItemDocument extends mongoose.Document {
+  id: mongoose.Types.ObjectId;
   quantity: string;
   ingredient: mongoose.Types.ObjectId | IngredientDocument;
   owner: mongoose.Types.ObjectId | UserDocument;
