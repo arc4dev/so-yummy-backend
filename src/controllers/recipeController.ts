@@ -1,4 +1,5 @@
 import { RequestHandler } from 'express';
+
 import Recipe from '../models/recipeModel.js';
 import catchAsync from '../utils/catchAsync.js';
 import { RECIPES_PER_PAGE } from '../utils/constants.js';

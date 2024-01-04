@@ -25,6 +25,7 @@ const recipeSchema = new mongoose.Schema<RecipeDocument>({
           ref: 'Ingredient',
         },
         ingredientMeasure: {
+          type: String,
           enum: {
             values: ['tbs', 'tsp', 'kg', 'g'],
             message: `The 'ingredientMeasure' field must be one of the following values: tbs, tsp, kg or g.`,

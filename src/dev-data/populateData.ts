@@ -1,95 +1,81 @@
-import mongoose from 'mongoose';
-import dotenv from 'dotenv';
-import Recipe from '../models/recipeModel.js';
-import Ingredient from '../models/IngredientModel.js';
-import { RECIPES_DATA } from './recipes.js';
-import connectDB from '../utils/connectDB.js';
+import OpenAI from 'openai';
+import { configDotenv } from 'dotenv';
+import fs from 'fs';
+import { RECIPES_DATA2 } from './recipes-update.js';
+configDotenv();
 
-dotenv.config();
+const data = RECIPES_DATA2;
 
-await connectDB();
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
 
-async function populateDatabase(recipes: any[]) {
+const generateData = async (recipe: any) => {
   try {
-    const session = await mongoose.startSession();
-    session.startTransaction();
+    const prompt =
+      `The recipe is for ${recipe.strMeal}. It is a ${recipe.category} dish. ` +
+      `The instructions are: ${recipe.strInstructions} ` +
+      `The ingredients are: ${recipe.ingredients
+        .map((ing: any) => ing.ingredientName)
+        .join(', ')}. ` +
+      `Can you provide a max 100 words description and cookingTime value of NUMBER represented in minutes for this recipe?
+    Write your response in this format: {"description": "<description>", "cookingTime": "<cookingTime>"} so JSON format.`;
 
-    let count = 0;
-    try {
-      for (const recipe of recipes) {
-        const ingredients = recipe.ingredients;
-        const ingredientsRefs = [];
+    const response = await openai.completions.create({
+      model: 'gpt-3.5-turbo-instruct',
+      prompt,
+      temperature: 1,
+      max_tokens: 256,
+      top_p: 1,
+      frequency_penalty: 0,
+      presence_penalty: 0,
+    });
 
-        for (const ingredient of ingredients) {
-          let ingredientRef;
+    const responseObject = JSON.parse(response.choices[0].text.trim());
 
-          const existingIngredient = await Ingredient.findOne({
-            name: ingredient.ingredientName,
-          }).session(session);
+    return {
+      description: responseObject?.description,
+      cookingTime: parseFloat(responseObject?.cookingTime),
+    };
+  } catch (error) {
+    console.log(error);
+  }
+};
 
-          if (existingIngredient) {
-            ingredientRef = existingIngredient._id;
-          } else {
-            const newIngredient = await Ingredient.create(
-              [
-                {
-                  name: ingredient.ingredientName,
-                  image: `www.themealdb.com/images/ingredients/${ingredient.ingredientName}.png`,
-                },
-              ],
-              { session: session }
-            );
+const processRecipes = async (data: any) => {
+  try {
+    let recipes = [];
 
-            ingredientRef = newIngredient[0]._id;
-          }
+    for (const recipe of data) {
+      if (recipe.strDescription === '') {
+        const res = await generateData(recipe);
 
-          ingredientsRefs.push({
-            ingredient: ingredientRef,
-            ingredientMeasure: ingredient.ingredientMeasure,
-          });
+        recipe.strDescription = res?.description || '';
+        recipe.cookingTime = res?.cookingTime || 60;
+        recipe.visibility = 'public';
+
+        recipes.push(recipe);
+        console.log(`Recipe ${recipe.strMeal} processed!`);
+      }
+    }
+
+    console.log('All recipes processed!');
+
+    fs.writeFile(
+      './recipes-update2.json',
+      JSON.stringify(recipes, null, 2),
+      'utf8',
+      (err) => {
+        if (err) {
+          return console.error('Error writing file:', err);
         }
 
-        await Recipe.create(
-          [
-            {
-              strMeal: recipe.strMeal,
-              strMealThumb: recipe.strMealThumb,
-              strInstructions: recipe.strInstructions,
-              ingredients: ingredientsRefs,
-              category: recipe.category,
-            },
-          ],
-          { session: session }
-        );
-
-        count += 1;
-
-        console.log(`Recipe ${count} of ${recipes.length} populated!`);
+        console.log('File saved successfully!');
       }
-
-      await session.commitTransaction();
-      session.endSession();
-      console.log('Recipes and ingredients populated successfully!');
-    } catch (error) {
-      await session.abortTransaction();
-      session.endSession();
-      console.error('Error while populating database:', error);
-    }
+    );
   } catch (error) {
-    console.error('Error starting a transaction:', error);
+    console.log(error);
   }
-}
+};
 
-const [part1, part2, part3, part4, part5] = [
-  RECIPES_DATA.slice(0, 60),
-  RECIPES_DATA.slice(60, 120),
-  RECIPES_DATA.slice(120, 180),
-  RECIPES_DATA.slice(180, 240),
-  RECIPES_DATA.slice(240),
-];
-
-await populateDatabase(part1);
-await populateDatabase(part2);
-await populateDatabase(part3);
-await populateDatabase(part4);
-await populateDatabase(part5);
+processRecipes(data);
