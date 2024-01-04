@@ -3,6 +3,7 @@ import { RequestHandler } from 'express';
 import Recipe from '../models/recipeModel.js';
 import catchAsync from '../utils/catchAsync.js';
 import { RECIPES_PER_PAGE } from '../utils/constants.js';
+import paginate from '../utils/paginate.js';
 
 const deleteRecipe: RequestHandler = catchAsync(async (req, res, next) => {
   const recipe = await Recipe.findByIdAndDelete(req.params.recipeId);
@@ -30,15 +31,14 @@ const getRecipes: RequestHandler = catchAsync(async (req, res, next) => {
     query = { category: { $regex: new RegExp(`^${category}`, 'i') } };
   }
 
-  const recipes = await Recipe.find(query)
-    .skip((pageCurrent - 1) * pageLimit) // Skip records based on the current page
-    .limit(pageLimit); // Limit the number of records per page
-
-  const totalPages = Math.ceil(
-    (await Recipe.countDocuments(query)) / pageLimit
+  const paginatedRecipes = await paginate(
+    Recipe,
+    query,
+    pageCurrent,
+    pageLimit
   );
 
-  if (!recipes)
+  if (!paginatedRecipes)
     return res.status(404).json({
       status: 'fail',
       message: 'Recipes not found',
@@ -46,10 +46,7 @@ const getRecipes: RequestHandler = catchAsync(async (req, res, next) => {
 
   res.status(200).json({
     status: 'success',
-    results: recipes.length,
-    page: pageCurrent,
-    totalPages,
-    data: recipes,
+    ...paginatedRecipes,
   });
 });
 
@@ -71,7 +68,11 @@ const getRecipeById: RequestHandler = catchAsync(async (req, res, next) => {
 });
 
 const getRecipesByQuery: RequestHandler = catchAsync(async (req, res, next) => {
+  const { page = 1, limit = RECIPES_PER_PAGE } = req.query;
   const { query } = req.params;
+
+  const pageCurrent = parseInt(page as string);
+  const pageLimit = parseInt(limit as string);
 
   if (!query)
     return res
@@ -79,18 +80,26 @@ const getRecipesByQuery: RequestHandler = catchAsync(async (req, res, next) => {
       .json({ status: 'fail', message: 'Please provide a query!' });
 
   const regex = new RegExp(`^${query}`, 'i');
-  const recipes = await Recipe.find({ strMeal: { $regex: regex } });
+  const paginatedRecipes = await paginate(
+    Recipe,
+    { strMeal: regex },
+    pageCurrent,
+    pageLimit
+  );
 
   return res.status(200).json({
     status: 'success',
-    results: recipes.length,
-    data: recipes,
+    ...paginatedRecipes,
   });
 });
 
 const getRecipesByIngredient: RequestHandler = catchAsync(
   async (req, res, next) => {
+    const { page = 1, limit = RECIPES_PER_PAGE } = req.query;
     const { ingredient } = req.params;
+
+    const pageCurrent = parseInt(page as string);
+    const pageLimit = parseInt(limit as string);
 
     if (!ingredient)
       return res
@@ -98,9 +107,10 @@ const getRecipesByIngredient: RequestHandler = catchAsync(
         .json({ status: 'fail', message: 'Please provide an ingredient!' });
 
     const regex = new RegExp(`^${ingredient}`, 'i');
+    // ! Why is this not working? !
     const recipes = await Recipe.find({
-      'ingredients.ingredientName': { $regex: regex },
-    });
+      'ingredients.ingredient.name': regex,
+    }).select('+ingredients');
 
     return res.status(200).json({
       status: 'success',

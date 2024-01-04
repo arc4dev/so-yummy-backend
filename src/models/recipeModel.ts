@@ -26,15 +26,15 @@ const recipeSchema = new mongoose.Schema<RecipeDocument>({
         },
         ingredientMeasure: {
           type: String,
-          enum: {
-            values: ['tbs', 'tsp', 'kg', 'g'],
-            message: `The 'ingredientMeasure' field must be one of the following values: tbs, tsp, kg or g.`,
-          },
+          // enum: {
+          //   values: ['tbs', 'tsp', 'kg', 'g', 'ml'],
+          //   message: `The 'ingredientMeasure' field must be one of the following values: tbs, tsp, ml kg or g.`,
+          // },
         },
         _id: false,
       },
     ],
-    select: false,
+    select: true,
   },
   category: {
     type: String,
@@ -71,9 +71,9 @@ const recipeSchema = new mongoose.Schema<RecipeDocument>({
   },
 });
 
-// Populate ingredients before specific find
-recipeSchema.pre('findOne', function (next) {
-  this.populate('ingredients.ingredient', 'name image', Ingredient);
+// Populate ingredient objects before find
+recipeSchema.pre<mongoose.Query<any, any>>(/^find/, function (next) {
+  this.populate('ingredients.ingredient', 'name image -_id', Ingredient);
 
   next();
 });
