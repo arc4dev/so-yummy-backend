@@ -3,19 +3,12 @@ import mongoose from 'mongoose';
 import Ingredient from './IngredientModel.js';
 import { RECIPE_CATEGORIES } from '../utils/constants.js';
 
-interface RecipeModel extends mongoose.Model<RecipeDocument> {
-  findOwnRecipes(userId: mongoose.Types.ObjectId): Promise<RecipeDocument[]>;
-  findOwnRecipe(
-    userId: mongoose.Types.ObjectId,
-    recipeId: string
-  ): Promise<RecipeDocument>;
-}
-
 const recipeSchema = new mongoose.Schema<RecipeDocument>(
   {
     strMeal: {
       type: String,
       required: [true, "The 'strMeal' field is required."],
+      unique: true,
     },
     strMealThumb: {
       type: String,
@@ -118,23 +111,6 @@ recipeSchema.pre<mongoose.Query<any, any>>(/^find/, function (next) {
   next();
 });
 
-recipeSchema.statics.findOwnRecipes = async function (userId) {
-  return this.find({ owner: userId, visibility: 'private' });
-};
-
-recipeSchema.statics.findOwnRecipe = async function (userId, recipeId) {
-  return this.findOne({
-    owner: userId,
-    _id: recipeId,
-    visibility: 'private',
-  })
-    .select('+ingredients +strInstructions +strDescription +cookingTime')
-    .populate('ingredients.ingredient', 'name image -_id', Ingredient);
-};
-
-const Recipe = mongoose.model<RecipeDocument, RecipeModel>(
-  'Recipe',
-  recipeSchema
-);
+const Recipe = mongoose.model<RecipeDocument>('Recipe', recipeSchema);
 
 export default Recipe;

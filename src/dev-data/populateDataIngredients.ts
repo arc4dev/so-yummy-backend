@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 
-import Recipe from '../models/recipeModel.js';
+import Recipe from '../models/RecipeModel.js';
 import Ingredient from '../models/IngredientModel.js';
 import connectDB from '../utils/connectDB.js';
 import { RECIPES_DATA2 } from './recipes-update.js';

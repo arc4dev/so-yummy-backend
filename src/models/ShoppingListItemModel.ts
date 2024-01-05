@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 
 import Ingredient from './IngredientModel.js';
-import User from './userModel.js';
+import User from './UserModel.js';
 
 const shoppingListItemSchema = new mongoose.Schema<ShoppingListItemDocument>(
   {

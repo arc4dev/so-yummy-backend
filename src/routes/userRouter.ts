@@ -20,6 +20,14 @@ userRouter
   .get(recipeController.getOwnRecipe)
   .delete(recipeController.deleteOwnRecipe);
 
-userRouter.get('/favourite-recipes', recipeController.getFavouriteRecipes);
+userRouter
+  .route('/favourite-recipes')
+  .get(recipeController.getFavouriteRecipes)
+  .post(recipeController.addFavouriteRecipe);
+
+userRouter.delete(
+  '/favourite-recipes/:recipeId',
+  recipeController.deleteFavouriteRecipe
+);
 
 export default userRouter;

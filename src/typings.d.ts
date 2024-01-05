@@ -30,6 +30,7 @@ interface UserDocument extends mongoose.Document {
   email: string;
   password: string;
   name: string;
+  favouriteRecipes: mongoose.Types.ObjectId[] | RecipeDocument[];
   verify: boolean;
   verificationToken: string | null;
   role: Role;

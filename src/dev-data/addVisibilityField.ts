@@ -1,4 +1,4 @@
-import Recipe from '../models/recipeModel.js';
+import Recipe from '../models/RecipeModel.js';
 import connectDB from '../utils/connectDB.js';
 
 async function run() {

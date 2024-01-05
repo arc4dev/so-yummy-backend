@@ -16,8 +16,18 @@ const userSchema = new mongoose.Schema<UserDocument>(
     },
     name: {
       type: String,
-      default: null,
+      default: 'Guest',
       required: [true, 'Name is require'],
+    },
+    favouriteRecipes: {
+      type: [
+        {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'Recipe',
+        },
+      ],
+      select: false,
+      default: [],
     },
     verify: {
       type: Boolean,

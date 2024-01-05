@@ -4,7 +4,7 @@ import mongoose from 'mongoose';
 import passport from '../config/config-passport.js';
 import jwt from 'jsonwebtoken';
 
-import User from '../models/userModel.js';
+import User from '../models/UserModel.js';
 import { sendEmail } from '../utils/sendEmail.js';
 import catchAsync from '../utils/catchAsync.js';
 

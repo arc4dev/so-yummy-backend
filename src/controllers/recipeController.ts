@@ -1,9 +1,10 @@
 import { RequestHandler } from 'express';
 
-import Recipe from '../models/recipeModel.js';
+import Recipe from '../models/RecipeModel.js';
 import catchAsync from '../utils/catchAsync.js';
 import { RECIPES_PER_PAGE } from '../utils/constants.js';
 import paginate from '../utils/paginate.js';
+import User from '../models/UserModel.js';
 
 const deleteRecipe: RequestHandler = catchAsync(async (req, res, next) => {
   const recipe = await Recipe.findByIdAndDelete(req.params.recipeId);
@@ -160,7 +161,7 @@ const addOwnRecipe: RequestHandler = catchAsync(async (req, res, next) => {
 const getOwnRecipes: RequestHandler = catchAsync(async (req, res, next) => {
   const { id } = req.user as UserDocument;
 
-  const recipes = await Recipe.findOwnRecipes(id);
+  const recipes = await Recipe.find({ owner: id, visibility: 'private' });
 
   res.status(201).json({ status: 'success', data: recipes });
 });
@@ -169,27 +170,97 @@ const getOwnRecipe: RequestHandler = catchAsync(async (req, res, next) => {
   const { id: userId } = req.user as UserDocument;
   const { recipeId } = req.params;
 
-  const recipe = await Recipe.findOwnRecipe(userId, recipeId);
+  const recipe = await Recipe.findOne({
+    owner: userId,
+    _id: recipeId,
+    visibility: 'private',
+  }).select('+ingredients +strInstructions +strDescription +cookingTime');
 
   res.status(201).json({ status: 'success', data: recipe });
 });
 
 const deleteOwnRecipe: RequestHandler = catchAsync(async (req, res, next) => {
-  // TODO - Logic
-  const {} = req.body;
+  const { id: userId } = req.user as UserDocument;
+  const { recipeId } = req.params;
 
-  await Recipe.findByIdAndDelete({});
+  await Recipe.findOneAndDelete({
+    owner: userId,
+    _id: recipeId,
+    visibility: 'private',
+  });
 
-  res.status(201).json({ status: 'success' });
+  res.status(204).json({ status: 'success', data: null });
 });
 
 const getFavouriteRecipes: RequestHandler = catchAsync(
   async (req, res, next) => {
-    // TODO - Logic
+    const { id: userId } = req.user as UserDocument;
 
-    const recipes = await Recipe.find({});
+    const user = await User.findById(userId)
+      .select('+favouriteRecipes +cookingTime')
+      .populate('favouriteRecipes');
 
-    res.status(201).json({ status: 'success', data: recipes });
+    const recipes = user?.favouriteRecipes;
+
+    res.status(200).json({ status: 'success', data: recipes });
+  }
+);
+
+const addFavouriteRecipe: RequestHandler = catchAsync(
+  async (req, res, next) => {
+    const { recipeId } = req.body;
+    const { id: userId } = req.user as UserDocument;
+
+    const user = await User.findById(userId).select('+favouriteRecipes');
+    if (!user) {
+      return res.status(404).json({
+        status: 'fail',
+        message: 'User not found',
+      });
+    }
+
+    // Check if the recipe already exists in favorites
+    if (user.favouriteRecipes.includes(recipeId)) {
+      return res.status(400).json({
+        status: 'fail',
+        message: 'Recipe already exists in favorites',
+      });
+    }
+
+    const recipe = await Recipe.findById(recipeId);
+    if (!recipe) {
+      return res.status(404).json({
+        status: 'fail',
+        message: 'Recipe not found',
+      });
+    }
+
+    // Add the recipe to favorites if it doesn't exist
+    user.favouriteRecipes.push(recipeId);
+    await user.save();
+
+    res.status(201).json({ status: 'success', data: recipe });
+  }
+);
+
+const deleteFavouriteRecipe: RequestHandler = catchAsync(
+  async (req, res, next) => {
+    const { id: userId } = req.user as UserDocument;
+    const { recipeId } = req.params;
+
+    const recipe = await Recipe.findById(recipeId);
+
+    if (!recipe)
+      return res.status(404).json({
+        status: 'fail',
+        message: 'Recipe not found',
+      });
+
+    await User.findByIdAndUpdate(userId, {
+      $pull: { favouriteRecipes: recipeId },
+    });
+
+    res.status(204).json({ status: 'success', data: null });
   }
 );
 
@@ -205,4 +276,6 @@ export default {
   getOwnRecipes,
   getOwnRecipe,
   getFavouriteRecipes,
+  addFavouriteRecipe,
+  deleteFavouriteRecipe,
 };
