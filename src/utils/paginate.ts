@@ -5,7 +5,8 @@ const paginate = async (
   pageLimit: number
 ) => {
   try {
-    const recipes = await query
+    const recipes = await model
+      .find(query)
       .skip((pageCurrent - 1) * pageLimit)
       .limit(pageLimit);
 

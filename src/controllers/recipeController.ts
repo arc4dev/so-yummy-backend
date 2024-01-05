@@ -52,7 +52,7 @@ const getRecipes: RequestHandler = catchAsync(async (req, res, next) => {
 
 const getRecipeById: RequestHandler = catchAsync(async (req, res, next) => {
   const recipe = await Recipe.findById(req.params.recipeId).select(
-    '+ingredients +strInstructions'
+    '+ingredients +strInstructions +strDescription +cookingTime'
   );
 
   if (!recipe)
@@ -133,11 +133,45 @@ const getAllRecipeCategories: RequestHandler = catchAsync(
 
 const addOwnRecipe: RequestHandler = catchAsync(async (req, res, next) => {
   const { id } = req.user as UserDocument;
-  const {} = req.body;
+  const {
+    strMeal,
+    strMealThumb,
+    strInstructions,
+    strDescription,
+    cookingTime,
+    ingredients,
+    category,
+  } = req.body;
 
-  const newRecipe = await Recipe.create({});
+  const newRecipe = await Recipe.create({
+    strMeal,
+    strMealThumb,
+    strInstructions,
+    strDescription,
+    cookingTime,
+    ingredients,
+    category,
+    owner: id,
+  });
 
   res.status(201).json({ status: 'success', data: newRecipe });
+});
+
+const getOwnRecipes: RequestHandler = catchAsync(async (req, res, next) => {
+  const { id } = req.user as UserDocument;
+
+  const recipes = await Recipe.findOwnRecipes(id);
+
+  res.status(201).json({ status: 'success', data: recipes });
+});
+
+const getOwnRecipe: RequestHandler = catchAsync(async (req, res, next) => {
+  const { id: userId } = req.user as UserDocument;
+  const { recipeId } = req.params;
+
+  const recipe = await Recipe.findOwnRecipe(userId, recipeId);
+
+  res.status(201).json({ status: 'success', data: recipe });
 });
 
 const deleteOwnRecipe: RequestHandler = catchAsync(async (req, res, next) => {
@@ -147,14 +181,6 @@ const deleteOwnRecipe: RequestHandler = catchAsync(async (req, res, next) => {
   await Recipe.findByIdAndDelete({});
 
   res.status(201).json({ status: 'success' });
-});
-
-const getOwnRecipes: RequestHandler = catchAsync(async (req, res, next) => {
-  // TODO - Logic
-
-  const recipes = await Recipe.find({});
-
-  res.status(201).json({ status: 'success', data: recipes });
 });
 
 const getFavouriteRecipes: RequestHandler = catchAsync(
@@ -177,5 +203,6 @@ export default {
   addOwnRecipe,
   deleteOwnRecipe,
   getOwnRecipes,
+  getOwnRecipe,
   getFavouriteRecipes,
 };
