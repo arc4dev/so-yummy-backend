@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import bcrypt from 'bcrypt';
+import crypto from 'crypto';
 
 const userSchema = new mongoose.Schema<UserDocument>(
   {
@@ -18,6 +19,10 @@ const userSchema = new mongoose.Schema<UserDocument>(
       type: String,
       default: 'Guest',
       required: [true, 'Name is require'],
+    },
+    image: {
+      type: String,
+      default: 'default.jpg',
     },
     favouriteRecipes: {
       type: [
@@ -46,6 +51,8 @@ const userSchema = new mongoose.Schema<UserDocument>(
       },
       default: 'user',
     },
+    passwordResetToken: String,
+    passwordResetTokenExpiration: Date,
   },
   { versionKey: false, timestamps: true }
 );
@@ -71,6 +78,25 @@ userSchema.methods.isCorrectPassword = async function (
   userPassword: string
 ) {
   return await bcrypt.compare(passwordToCheck, userPassword);
+};
+
+// Method to create a password reset token
+userSchema.methods.createPasswordResetToken = function () {
+  // 1) Create an original reset token
+  const resetToken = crypto.randomBytes(32).toString('hex');
+
+  // 2) Encrypt this token to save to the database
+  this.passwordResetToken = crypto
+    .createHash('sha256')
+    .update(resetToken)
+    .digest('hex');
+
+  // 3) Set a {min} minutes token expiration
+  const min = 10;
+  this.passwordResetTokenExpiration = Date.now() + min * 60 * 1000;
+
+  // 4) return the original token
+  return resetToken;
 };
 
 const User = mongoose.model<UserDocument>('User', userSchema);

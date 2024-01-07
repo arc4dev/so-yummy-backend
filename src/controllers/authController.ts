@@ -1,14 +1,28 @@
-import { Request, RequestHandler } from 'express';
+import { Request, RequestHandler, Response } from 'express';
 import { nanoid } from 'nanoid';
-import mongoose from 'mongoose';
-import passport from '../config/config-passport.js';
 import jwt from 'jsonwebtoken';
+import mongoose from 'mongoose';
+import crypto from 'crypto';
 
+import passport from '../config/config-passport.js';
 import User from '../models/UserModel.js';
 import { sendEmail } from '../utils/sendEmail.js';
 import catchAsync from '../utils/catchAsync.js';
 
 // helpers
+const sendJWT = (user: UserDocument, res: Response) => {
+  const token = signToken({
+    id: user.id,
+    username: user.email,
+  });
+
+  res.status(200).json({
+    status: 'success',
+    data: { email: user.email, name: user.name },
+    token,
+  });
+};
+
 const signToken = (
   payload: {
     id: mongoose.Types.ObjectId;
@@ -100,16 +114,7 @@ const signIn: RequestHandler = catchAsync(async (req, res, next) => {
       .json({ status: 'fail', message: 'Please verify your email first!' });
 
   // 4. If everything is ok, send the token to client
-  const token = signToken({
-    id: user.id,
-    username: email,
-  });
-
-  res.status(200).json({
-    status: 'success',
-    data: { email: user.email, name: user.name },
-    token,
-  });
+  sendJWT(user, res);
 });
 
 const verifyUser: RequestHandler = catchAsync(async (req, res, next) => {
@@ -158,15 +163,66 @@ const resendVerificationEmail: RequestHandler = catchAsync(
 );
 
 const forgotPassword: RequestHandler = catchAsync(async (req, res, next) => {
-  // TODO - Logic
+  // 1) Get user by email (POST email)
+  const user = await User.findOne({ email: req.body.email });
+  if (!user)
+    return res.status(404).json({ status: 'fail', message: 'User not found' });
 
-  res.status(200).json({ status: 'success', message: 'Forgot password' });
+  // 2) Generate a random reset token
+  const resetToken = user.createPasswordResetToken();
+  await user.save({ validateBeforeSave: false });
+
+  // 3) Send the token to user's email
+  const resetURL = `${req.protocol}://${req.get(
+    'host'
+  )}/users/resetPassword/${resetToken}`;
+
+  try {
+    await sendEmail(resetURL, user.email); // ! EMAIL CLASS
+  } catch (err) {
+    user.passwordResetToken = null;
+    user.passwordResetTokenExpiration = null;
+
+    return res.status(500).json({
+      status: 'fail',
+      message: 'We could not send you a reset token. Please try again later',
+    });
+  }
+
+  res.status(200).json({
+    status: 'success',
+    message: 'Token sent to an email!',
+  });
 });
 
 const resetPassword: RequestHandler = catchAsync(async (req, res, next) => {
-  // TODO - Logic
+  const { token } = req.params;
 
-  res.status(200).json({ status: 'success', message: 'Reset password' });
+  // 1) Find user by token
+  const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+
+  const user = await User.findOne({
+    passwordResetToken: hashedToken,
+    passwordResetTokenExpiration: { $gt: Date.now() },
+  });
+
+  // 2) Check if user exists and if the token did not expired
+  if (!user)
+    return res.status(404).json({
+      status: 'fail',
+      message: 'User not found or token expired. Please try again!',
+    });
+
+  // 3) Set a new password
+  user.password = req.body.password;
+  user.passwordResetToken = null;
+  user.passwordResetTokenExpiration = null;
+
+  // 5) Save the user
+  await user.save();
+
+  // 6) Log in the user, send JWT
+  sendJWT(user, res);
 });
 
 const signOut: RequestHandler = catchAsync(async (req, res, next) => {

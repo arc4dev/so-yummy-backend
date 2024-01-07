@@ -8,7 +8,14 @@ const userRouter = express.Router();
 // Auth before all requests
 userRouter.use(authController.auth);
 
-userRouter.get('/me', userController.getCurrentUser);
+userRouter.route('/me').get(userController.getCurrentUser);
+
+userRouter.post(
+  '/update-me',
+  userController.uploadImage,
+  userController.resizePhoto,
+  userController.updateUser
+);
 
 userRouter
   .route('/my-recipes')

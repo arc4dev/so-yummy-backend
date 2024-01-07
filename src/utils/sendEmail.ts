@@ -17,3 +17,5 @@ export const sendEmail = (url: string, email: string) => {
       console.error(error);
     });
 };
+
+// TODO - EMAIL CLASS

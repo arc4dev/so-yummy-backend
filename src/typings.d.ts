@@ -30,11 +30,15 @@ interface UserDocument extends mongoose.Document {
   email: string;
   password: string;
   name: string;
+  image: string;
   favouriteRecipes: mongoose.Types.ObjectId[] | RecipeDocument[];
   verify: boolean;
   verificationToken: string | null;
   role: Role;
+  passwordResetToken: string | null;
+  passwordResetTokenExpiration: Date | null;
   isCorrectPassword(password: string, hashedPassword: string): Promise<boolean>;
+  createPasswordResetToken(): string;
 }
 
 interface IngredientDocument extends mongoose.Document {

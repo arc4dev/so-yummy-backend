@@ -11,6 +11,7 @@ import authRouter from './routes/authRouter.js';
 import userRouter from './routes/userRouter.js';
 import shoppingListRouter from './routes/shoppingListRouter.js';
 import ingredientRouter from './routes/ingredientRouter.js';
+import path from 'path';
 
 const app = express();
 
@@ -20,6 +21,7 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json({ limit: '100kb' }));
+app.use(express.static('public'));
 
 // Routes
 app.use('/api/auth', authRouter);
