@@ -1,11 +1,11 @@
 import { Request, RequestHandler } from 'express';
-import { nanoid } from 'nanoid';
-import crypto from 'crypto';
 
-import passport from '../config/config-passport.js';
+import Email from '../utils/email.js';
 import User from '../models/UserModel.js';
-import { sendEmail } from '../utils/sendEmail.js';
 import catchAsync from '../utils/catchAsync.js';
+import crypto from 'crypto';
+import { nanoid } from 'nanoid';
+import passport from '../config/config-passport.js';
 import { sendJWT } from '../utils/helpers.js';
 
 const url = (verificationToken: string, req: Request) =>
@@ -32,7 +32,6 @@ const auth: RequestHandler = catchAsync(async (req, res, next) => {
 const signUp: RequestHandler = catchAsync(async (req, res, next) => {
   const { email, name, password } = req.body;
 
-  // 1. Create a user
   const user = await User.create({
     name,
     email,
@@ -40,16 +39,16 @@ const signUp: RequestHandler = catchAsync(async (req, res, next) => {
     verificationToken: nanoid(),
   });
 
-  if (!user.verificationToken) {
+  try {
+    await new Email(email, url(user.verificationToken!, req)).sendWelcome();
+  } catch (error) {
     await user.deleteOne();
 
-    return res
-      .status(400)
-      .json({ status: 'fail', message: 'Something went wrong' });
+    return res.status(500).json({
+      status: 'fail',
+      message: 'We could not send you an email! Please try again later.',
+    });
   }
-
-  // 2. Send verification email
-  sendEmail(url(user.verificationToken, req), email);
 
   res.status(201).json({
     status: 'success',
@@ -125,7 +124,7 @@ const resendVerificationEmail: RequestHandler = catchAsync(
         .status(400)
         .json({ status: 'fail', message: 'Something went wrong' });
 
-    sendEmail(url(user.verificationToken, req), email);
+    await new Email(email, url(user.verificationToken!, req)).sendWelcome();
 
     res
       .status(200)
@@ -144,19 +143,18 @@ const forgotPassword: RequestHandler = catchAsync(async (req, res, next) => {
   await user.save({ validateBeforeSave: false });
 
   // 3) Send the token to user's email
-  const resetURL = `${req.protocol}://${req.get(
-    'host'
-  )}/users/resetPassword/${resetToken}`;
-
   try {
-    await sendEmail(resetURL, user.email); // ! EMAIL CLASS
+    await new Email(
+      user.email,
+      `${req.protocol}://${req.get('host')}/auth/reset-password/${resetToken}`
+    ).sendPasswordResetToken();
   } catch (err) {
     user.passwordResetToken = null;
     user.passwordResetTokenExpiration = null;
 
     return res.status(500).json({
       status: 'fail',
-      message: 'We could not send you a reset token. Please try again later',
+      message: 'We could not send you a reset token. Please try again later!',
     });
   }
 
@@ -168,6 +166,7 @@ const forgotPassword: RequestHandler = catchAsync(async (req, res, next) => {
 
 const resetPassword: RequestHandler = catchAsync(async (req, res, next) => {
   const { token } = req.params;
+  const { password } = req.body;
 
   // 1) Find user by token
   const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
@@ -185,7 +184,7 @@ const resetPassword: RequestHandler = catchAsync(async (req, res, next) => {
     });
 
   // 3) Set a new password
-  user.password = req.body.password;
+  user.password = password;
   user.passwordResetToken = null;
   user.passwordResetTokenExpiration = null;
 

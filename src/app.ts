@@ -11,7 +11,6 @@ import authRouter from './routes/authRouter.js';
 import userRouter from './routes/userRouter.js';
 import shoppingListRouter from './routes/shoppingListRouter.js';
 import ingredientRouter from './routes/ingredientRouter.js';
-import path from 'path';
 
 const app = express();
 
