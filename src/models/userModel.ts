@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import bcrypt from 'bcrypt';
+import crypto from 'crypto';
 
 const userSchema = new mongoose.Schema<UserDocument>(
   {
@@ -16,8 +17,22 @@ const userSchema = new mongoose.Schema<UserDocument>(
     },
     name: {
       type: String,
-      default: null,
+      default: 'Guest',
       required: [true, 'Name is require'],
+    },
+    image: {
+      type: String,
+      default: 'default.jpg',
+    },
+    favouriteRecipes: {
+      type: [
+        {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'Recipe',
+        },
+      ],
+      select: false,
+      default: [],
     },
     verify: {
       type: Boolean,
@@ -36,15 +51,11 @@ const userSchema = new mongoose.Schema<UserDocument>(
       },
       default: 'user',
     },
+    passwordResetToken: String,
+    passwordResetTokenExpiration: Date,
   },
   { versionKey: false, timestamps: true }
 );
-
-userSchema.virtual('own-recipes', {
-  ref: 'Recipe',
-  localField: '_id',
-  foreignField: 'owner',
-});
 
 userSchema.virtual('shopping-list', {
   ref: 'ShoppingListItem',
@@ -67,6 +78,25 @@ userSchema.methods.isCorrectPassword = async function (
   userPassword: string
 ) {
   return await bcrypt.compare(passwordToCheck, userPassword);
+};
+
+// Method to create a password reset token
+userSchema.methods.createPasswordResetToken = function () {
+  // 1) Create an original reset token
+  const resetToken = crypto.randomBytes(32).toString('hex');
+
+  // 2) Encrypt this token to save to the database
+  this.passwordResetToken = crypto
+    .createHash('sha256')
+    .update(resetToken)
+    .digest('hex');
+
+  // 3) Set a {min} minutes token expiration
+  const min = 10;
+  this.passwordResetTokenExpiration = Date.now() + min * 60 * 1000;
+
+  // 4) return the original token
+  return resetToken;
 };
 
 const User = mongoose.model<UserDocument>('User', userSchema);

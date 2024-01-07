@@ -1,8 +1,53 @@
 import { RequestHandler } from 'express';
 
-import Recipe from '../models/recipeModel.js';
+import Recipe from '../models/RecipeModel.js';
 import catchAsync from '../utils/catchAsync.js';
 import { RECIPES_PER_PAGE } from '../utils/constants.js';
+import paginate from '../utils/paginate.js';
+import User from '../models/UserModel.js';
+
+const getRecipes: RequestHandler = catchAsync(async (req, res, next) => {
+  const { category, page = 1, limit = RECIPES_PER_PAGE } = req.query;
+
+  let query = {};
+
+  if (category) {
+    query = { category: { $regex: new RegExp(`^${category}`, 'i') } };
+  }
+
+  const paginatedRecipes = await paginate(Recipe.find(query), {
+    page,
+    limit,
+  });
+
+  if (!paginatedRecipes)
+    return res.status(404).json({
+      status: 'fail',
+      message: 'Recipes not found',
+    });
+
+  res.status(200).json({
+    status: 'success',
+    ...paginatedRecipes,
+  });
+});
+
+const getRecipeById: RequestHandler = catchAsync(async (req, res, next) => {
+  const recipe = await Recipe.findById(req.params.recipeId).select(
+    '+ingredients +strInstructions +strDescription +cookingTime'
+  );
+
+  if (!recipe)
+    return res.status(404).json({
+      status: 'fail',
+      message: 'Recipe not found',
+    });
+
+  res.status(200).json({
+    status: 'success',
+    data: recipe,
+  });
+});
 
 const deleteRecipe: RequestHandler = catchAsync(async (req, res, next) => {
   const recipe = await Recipe.findByIdAndDelete(req.params.recipeId);
@@ -19,58 +64,8 @@ const deleteRecipe: RequestHandler = catchAsync(async (req, res, next) => {
   });
 });
 
-const getRecipes: RequestHandler = catchAsync(async (req, res, next) => {
-  const { category, page = 1, limit = RECIPES_PER_PAGE } = req.query;
-  const pageCurrent = parseInt(page as string);
-  const pageLimit = parseInt(limit as string);
-
-  let query = {};
-
-  if (category) {
-    query = { category: { $regex: new RegExp(`^${category}`, 'i') } };
-  }
-
-  const recipes = await Recipe.find(query)
-    .skip((pageCurrent - 1) * pageLimit) // Skip records based on the current page
-    .limit(pageLimit); // Limit the number of records per page
-
-  const totalPages = Math.ceil(
-    (await Recipe.countDocuments(query)) / pageLimit
-  );
-
-  if (!recipes)
-    return res.status(404).json({
-      status: 'fail',
-      message: 'Recipes not found',
-    });
-
-  res.status(200).json({
-    status: 'success',
-    results: recipes.length,
-    page: pageCurrent,
-    totalPages,
-    data: recipes,
-  });
-});
-
-const getRecipeById: RequestHandler = catchAsync(async (req, res, next) => {
-  const recipe = await Recipe.findById(req.params.recipeId).select(
-    '+ingredients +strInstructions'
-  );
-
-  if (!recipe)
-    return res.status(404).json({
-      status: 'fail',
-      message: 'Recipe not found',
-    });
-
-  res.status(200).json({
-    status: 'success',
-    data: recipe,
-  });
-});
-
 const getRecipesByQuery: RequestHandler = catchAsync(async (req, res, next) => {
+  const { page = 1, limit = RECIPES_PER_PAGE } = req.query;
   const { query } = req.params;
 
   if (!query)
@@ -78,18 +73,20 @@ const getRecipesByQuery: RequestHandler = catchAsync(async (req, res, next) => {
       .status(400)
       .json({ status: 'fail', message: 'Please provide a query!' });
 
-  const regex = new RegExp(`^${query}`, 'i');
-  const recipes = await Recipe.find({ strMeal: { $regex: regex } });
+  const paginatedRecipes = await paginate(
+    Recipe.find({ strMeal: new RegExp(`^${query}`, 'i') }),
+    { page, limit }
+  );
 
   return res.status(200).json({
     status: 'success',
-    results: recipes.length,
-    data: recipes,
+    ...paginatedRecipes,
   });
 });
 
 const getRecipesByIngredient: RequestHandler = catchAsync(
   async (req, res, next) => {
+    const { page = 1, limit = RECIPES_PER_PAGE } = req.query;
     const { ingredient } = req.params;
 
     if (!ingredient)
@@ -97,15 +94,17 @@ const getRecipesByIngredient: RequestHandler = catchAsync(
         .status(400)
         .json({ status: 'fail', message: 'Please provide an ingredient!' });
 
-    const regex = new RegExp(`^${ingredient}`, 'i');
-    const recipes = await Recipe.find({
-      'ingredients.ingredientName': { $regex: regex },
-    });
+    // ! Why is this not working? !
+    const paginatedRecipes = await paginate(
+      Recipe.find({
+        'ingredients.ingredient.name': new RegExp(`^${ingredient}`, 'i'),
+      }).select('+ingredients'),
+      { page, limit }
+    );
 
     return res.status(200).json({
       status: 'success',
-      results: recipes.length,
-      data: recipes,
+      ...paginatedRecipes,
     });
   }
 );
@@ -123,37 +122,147 @@ const getAllRecipeCategories: RequestHandler = catchAsync(
 
 const addOwnRecipe: RequestHandler = catchAsync(async (req, res, next) => {
   const { id } = req.user as UserDocument;
-  const {} = req.body;
+  const {
+    strMeal,
+    strMealThumb,
+    strInstructions,
+    strDescription,
+    cookingTime,
+    ingredients,
+    category,
+  } = req.body;
 
-  const newRecipe = await Recipe.create({});
+  const newRecipe = await Recipe.create({
+    strMeal,
+    strMealThumb,
+    strInstructions,
+    strDescription,
+    cookingTime,
+    ingredients,
+    category,
+    owner: id,
+  });
 
   res.status(201).json({ status: 'success', data: newRecipe });
 });
 
-const deleteOwnRecipe: RequestHandler = catchAsync(async (req, res, next) => {
-  // TODO - Logic
-  const {} = req.body;
-
-  await Recipe.findByIdAndDelete({});
-
-  res.status(201).json({ status: 'success' });
-});
-
 const getOwnRecipes: RequestHandler = catchAsync(async (req, res, next) => {
-  // TODO - Logic
+  const { page = 1, limit = RECIPES_PER_PAGE } = req.query;
+  const { id } = req.user as UserDocument;
 
-  const recipes = await Recipe.find({});
+  const recipes = await paginate(
+    Recipe.find({ owner: id, visibility: 'private' }),
+    { page, limit }
+  );
 
   res.status(201).json({ status: 'success', data: recipes });
 });
 
+const getOwnRecipe: RequestHandler = catchAsync(async (req, res, next) => {
+  const { id: userId } = req.user as UserDocument;
+  const { recipeId } = req.params;
+
+  const recipe = await Recipe.findOne({
+    owner: userId,
+    _id: recipeId,
+    visibility: 'private',
+  }).select('+ingredients +strInstructions +strDescription +cookingTime');
+
+  res.status(201).json({ status: 'success', data: recipe });
+});
+
+const deleteOwnRecipe: RequestHandler = catchAsync(async (req, res, next) => {
+  const { id: userId } = req.user as UserDocument;
+  const { recipeId } = req.params;
+
+  await Recipe.findOneAndDelete({
+    owner: userId,
+    _id: recipeId,
+    visibility: 'private',
+  });
+
+  res.status(204).json({ status: 'success', data: null });
+});
+
 const getFavouriteRecipes: RequestHandler = catchAsync(
   async (req, res, next) => {
-    // TODO - Logic
+    const { page = 1, limit = RECIPES_PER_PAGE } = req.query;
+    const { id: userId } = req.user as UserDocument;
 
-    const recipes = await Recipe.find({});
+    const user = await User.findById(userId)
+      .select('+favouriteRecipes')
+      .populate({
+        path: 'favouriteRecipes',
+        select: '+cookingTime +strDescription',
+      });
 
-    res.status(201).json({ status: 'success', data: recipes });
+    const recipes = user?.favouriteRecipes;
+    const paginatedRecipes = await paginate(
+      Recipe.find({ _id: { $in: recipes } }).select(
+        '+cookingTime +strDescription'
+      ),
+      { page, limit }
+    );
+
+    res.status(200).json({ status: 'success', ...paginatedRecipes });
+  }
+);
+
+const addFavouriteRecipe: RequestHandler = catchAsync(
+  async (req, res, next) => {
+    const { recipeId } = req.body;
+    const { id: userId } = req.user as UserDocument;
+
+    const user = await User.findById(userId).select('+favouriteRecipes');
+    if (!user) {
+      return res.status(404).json({
+        status: 'fail',
+        message: 'User not found',
+      });
+    }
+
+    // Check if the recipe already exists in favorites
+    if (user.favouriteRecipes.includes(recipeId)) {
+      return res.status(400).json({
+        status: 'fail',
+        message: 'Recipe already exists in favorites',
+      });
+    }
+
+    const recipe = await Recipe.findById(recipeId);
+    if (!recipe) {
+      return res.status(404).json({
+        status: 'fail',
+        message: 'Recipe not found',
+      });
+    }
+
+    // Add the recipe to favorites if it doesn't exist
+    user.favouriteRecipes.push(recipeId);
+    await user.save();
+
+    res.status(201).json({ status: 'success', data: recipe });
+  }
+);
+
+const deleteFavouriteRecipe: RequestHandler = catchAsync(
+  async (req, res, next) => {
+    const { id: userId } = req.user as UserDocument;
+    const { recipeId } = req.params;
+
+    const recipe = await Recipe.findById(recipeId);
+
+    if (!recipe)
+      return res.status(404).json({
+        status: 'fail',
+        message: 'Recipe not found',
+      });
+
+    await User.findByIdAndUpdate(userId, {
+      $pull: { favouriteRecipes: recipeId },
+    });
+
+    res.status(204).json({ status: 'success', data: null });
   }
 );
 
@@ -167,5 +276,8 @@ export default {
   addOwnRecipe,
   deleteOwnRecipe,
   getOwnRecipes,
+  getOwnRecipe,
   getFavouriteRecipes,
+  addFavouriteRecipe,
+  deleteFavouriteRecipe,
 };

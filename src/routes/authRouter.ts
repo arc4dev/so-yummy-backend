@@ -17,4 +17,8 @@ authRouter.post('/verify', authController.resendVerificationEmail);
 
 authRouter.get('/verify/:verificationToken', authController.verifyUser);
 
+authRouter.post('/forgot-password', authController.forgotPassword);
+
+authRouter.post('/reset-password/:token', authController.resetPassword);
+
 export default authRouter;

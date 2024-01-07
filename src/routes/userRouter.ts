@@ -8,7 +8,14 @@ const userRouter = express.Router();
 // Auth before all requests
 userRouter.use(authController.auth);
 
-userRouter.get('/me', userController.getCurrentUser);
+userRouter.route('/me').get(userController.getCurrentUser);
+
+userRouter.post(
+  '/update-me',
+  userController.uploadImage,
+  userController.resizePhoto,
+  userController.updateUser
+);
 
 userRouter
   .route('/my-recipes')
@@ -16,10 +23,18 @@ userRouter
   .post(recipeController.addOwnRecipe);
 
 userRouter
-  .route('/my-recipes/:id')
-  .get(recipeController.getOwnRecipes)
+  .route('/my-recipes/:recipeId')
+  .get(recipeController.getOwnRecipe)
   .delete(recipeController.deleteOwnRecipe);
 
-userRouter.get('/favourite-recipes', recipeController.getFavouriteRecipes);
+userRouter
+  .route('/favourite-recipes')
+  .get(recipeController.getFavouriteRecipes)
+  .post(recipeController.addFavouriteRecipe);
+
+userRouter.delete(
+  '/favourite-recipes/:recipeId',
+  recipeController.deleteFavouriteRecipe
+);
 
 export default userRouter;

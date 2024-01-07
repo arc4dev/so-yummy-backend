@@ -1,13 +1,13 @@
 import mongoose from 'mongoose';
 
 import Ingredient from './IngredientModel.js';
-import User from './userModel.js';
+import User from './UserModel.js';
 
 const shoppingListItemSchema = new mongoose.Schema<ShoppingListItemDocument>(
   {
     quantity: {
       type: String,
-      required: [true, 'Value is required'],
+      required: [true, 'Quantity is required'],
     },
     ingredient: {
       type: mongoose.Schema.ObjectId,
@@ -24,13 +24,15 @@ const shoppingListItemSchema = new mongoose.Schema<ShoppingListItemDocument>(
   { versionKey: false, timestamps: true }
 );
 
-// Populate ingredient and owner field with every find query
+// Populate ingredient with every find query
 shoppingListItemSchema.pre<mongoose.Query<any, any>>(/^find/, function (next) {
-  this.populate('ingredient', 'name image', Ingredient).populate(
-    'owner',
-    'name email',
-    User
-  );
+  this.populate('ingredient', 'name image', Ingredient);
+
+  next();
+});
+
+shoppingListItemSchema.pre<mongoose.Query<any, any>>(/^find/, function (next) {
+  this.select('-createdAt -updatedAt');
 
   next();
 });

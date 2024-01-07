@@ -1,31 +1,16 @@
 import { Request, RequestHandler } from 'express';
-import { nanoid } from 'nanoid';
-import mongoose from 'mongoose';
-import passport from '../config/config-passport.js';
-import jwt from 'jsonwebtoken';
 
-import User from '../models/userModel.js';
-import { sendEmail } from '../utils/sendEmail.js';
+import Email from '../utils/email.js';
+import User from '../models/UserModel.js';
 import catchAsync from '../utils/catchAsync.js';
-
-// helpers
-const signToken = (
-  payload: {
-    id: mongoose.Types.ObjectId;
-    username: string;
-  },
-  isLogout = false
-) =>
-  jwt.sign(payload, process.env.JWT_SECRET!, {
-    expiresIn: isLogout
-      ? process.env.JWT_EXPIRATION_LOGOUT
-      : process.env.JWT_EXPIRATION,
-  });
+import crypto from 'crypto';
+import { nanoid } from 'nanoid';
+import passport from '../config/config-passport.js';
+import { sendJWT } from '../utils/helpers.js';
 
 const url = (verificationToken: string, req: Request) =>
   `${req.protocol}://${req.get('host')}/api/auth/verify/${verificationToken}`;
 
-// Controller
 const auth: RequestHandler = catchAsync(async (req, res, next) => {
   await passport.authenticate(
     'jwt',
@@ -47,7 +32,6 @@ const auth: RequestHandler = catchAsync(async (req, res, next) => {
 const signUp: RequestHandler = catchAsync(async (req, res, next) => {
   const { email, name, password } = req.body;
 
-  // 1. Create a user
   const user = await User.create({
     name,
     email,
@@ -55,16 +39,16 @@ const signUp: RequestHandler = catchAsync(async (req, res, next) => {
     verificationToken: nanoid(),
   });
 
-  if (!user.verificationToken) {
+  try {
+    await new Email(email, url(user.verificationToken!, req)).sendWelcome();
+  } catch (error) {
     await user.deleteOne();
 
-    return res
-      .status(400)
-      .json({ status: 'fail', message: 'Something went wrong' });
+    return res.status(500).json({
+      status: 'fail',
+      message: 'We could not send you an email! Please try again later.',
+    });
   }
-
-  // 2. Send verification email
-  sendEmail(url(user.verificationToken, req), email);
 
   res.status(201).json({
     status: 'success',
@@ -100,16 +84,7 @@ const signIn: RequestHandler = catchAsync(async (req, res, next) => {
       .json({ status: 'fail', message: 'Please verify your email first!' });
 
   // 4. If everything is ok, send the token to client
-  const token = signToken({
-    id: user.id,
-    username: email,
-  });
-
-  res.status(200).json({
-    status: 'success',
-    data: { email: user.email, name: user.name },
-    token,
-  });
+  sendJWT(user, res);
 });
 
 const verifyUser: RequestHandler = catchAsync(async (req, res, next) => {
@@ -149,7 +124,7 @@ const resendVerificationEmail: RequestHandler = catchAsync(
         .status(400)
         .json({ status: 'fail', message: 'Something went wrong' });
 
-    sendEmail(url(user.verificationToken, req), email);
+    await new Email(email, url(user.verificationToken!, req)).sendWelcome();
 
     res
       .status(200)
@@ -158,21 +133,72 @@ const resendVerificationEmail: RequestHandler = catchAsync(
 );
 
 const forgotPassword: RequestHandler = catchAsync(async (req, res, next) => {
-  // TODO - Logic
+  // 1) Get user by email (POST email)
+  const user = await User.findOne({ email: req.body.email });
+  if (!user)
+    return res.status(404).json({ status: 'fail', message: 'User not found' });
 
-  res.status(200).json({ status: 'success', message: 'Forgot password' });
+  // 2) Generate a random reset token
+  const resetToken = user.createPasswordResetToken();
+  await user.save({ validateBeforeSave: false });
+
+  // 3) Send the token to user's email
+  try {
+    await new Email(
+      user.email,
+      `${req.protocol}://${req.get('host')}/auth/reset-password/${resetToken}`
+    ).sendPasswordResetToken();
+  } catch (err) {
+    user.passwordResetToken = null;
+    user.passwordResetTokenExpiration = null;
+
+    return res.status(500).json({
+      status: 'fail',
+      message: 'We could not send you a reset token. Please try again later!',
+    });
+  }
+
+  res.status(200).json({
+    status: 'success',
+    message: 'Token sent to an email!',
+  });
 });
 
 const resetPassword: RequestHandler = catchAsync(async (req, res, next) => {
-  // TODO - Logic
+  const { token } = req.params;
+  const { password } = req.body;
 
-  res.status(200).json({ status: 'success', message: 'Reset password' });
+  // 1) Find user by token
+  const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+
+  const user = await User.findOne({
+    passwordResetToken: hashedToken,
+    passwordResetTokenExpiration: { $gt: Date.now() },
+  });
+
+  // 2) Check if user exists and if the token did not expired
+  if (!user)
+    return res.status(404).json({
+      status: 'fail',
+      message: 'User not found or token expired. Please try again!',
+    });
+
+  // 3) Set a new password
+  user.password = password;
+  user.passwordResetToken = null;
+  user.passwordResetTokenExpiration = null;
+
+  // 5) Save the user
+  await user.save();
+
+  // 6) Log in the user, send JWT
+  sendJWT(user, res);
 });
 
 const signOut: RequestHandler = catchAsync(async (req, res, next) => {
   // ! We cannot log out user because we use JWT tokens !
   // Black listing JWT tokens is not an optimal solution
-  // We can only delete the token from the client - short expiration time
+  // We can only delete the token from the client and keep short expiration time
 
   res.status(200).json({
     status: 'success',
