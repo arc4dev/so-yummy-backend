@@ -105,7 +105,7 @@ recipeSchema.pre<mongoose.Query<any, any>>(/^find/, function (next) {
 
 // Populate ingredient objects before find
 recipeSchema.pre<mongoose.Query<any, any>>(/^find/, function (next) {
-  this.populate('ingredients.ingredient', 'name image -_id', Ingredient).select(
+  this.populate('ingredients.ingredient', 'name image', Ingredient).select(
     '-createdAt -updatedAt'
   );
 
