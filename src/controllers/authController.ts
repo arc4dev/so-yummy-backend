@@ -172,7 +172,7 @@ const resetPassword: RequestHandler = catchAsync(async (req, res, next) => {
 const signOut: RequestHandler = catchAsync(async (req, res, next) => {
   // ! We cannot log out user because we use JWT tokens !
   // Black listing JWT tokens is not an optimal solution
-  // We can only delete the token from the client - short expiration time
+  // We can only delete the token from the client and keep short expiration time
 
   res.status(200).json({
     status: 'success',

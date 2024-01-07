@@ -23,8 +23,6 @@ const deleteRecipe: RequestHandler = catchAsync(async (req, res, next) => {
 
 const getRecipes: RequestHandler = catchAsync(async (req, res, next) => {
   const { category, page = 1, limit = RECIPES_PER_PAGE } = req.query;
-  const pageCurrent = parseInt(page as string);
-  const pageLimit = parseInt(limit as string);
 
   let query = {};
 
@@ -32,12 +30,10 @@ const getRecipes: RequestHandler = catchAsync(async (req, res, next) => {
     query = { category: { $regex: new RegExp(`^${category}`, 'i') } };
   }
 
-  const paginatedRecipes = await paginate(
-    Recipe,
-    query,
-    pageCurrent,
-    pageLimit
-  );
+  const paginatedRecipes = await paginate(Recipe.find(query), {
+    page,
+    limit,
+  });
 
   if (!paginatedRecipes)
     return res.status(404).json({
@@ -72,20 +68,14 @@ const getRecipesByQuery: RequestHandler = catchAsync(async (req, res, next) => {
   const { page = 1, limit = RECIPES_PER_PAGE } = req.query;
   const { query } = req.params;
 
-  const pageCurrent = parseInt(page as string);
-  const pageLimit = parseInt(limit as string);
-
   if (!query)
     return res
       .status(400)
       .json({ status: 'fail', message: 'Please provide a query!' });
 
-  const regex = new RegExp(`^${query}`, 'i');
   const paginatedRecipes = await paginate(
-    Recipe,
-    { strMeal: regex },
-    pageCurrent,
-    pageLimit
+    Recipe.find({ strMeal: new RegExp(`^${query}`, 'i') }),
+    { page, limit }
   );
 
   return res.status(200).json({
@@ -99,24 +89,22 @@ const getRecipesByIngredient: RequestHandler = catchAsync(
     const { page = 1, limit = RECIPES_PER_PAGE } = req.query;
     const { ingredient } = req.params;
 
-    const pageCurrent = parseInt(page as string);
-    const pageLimit = parseInt(limit as string);
-
     if (!ingredient)
       return res
         .status(400)
         .json({ status: 'fail', message: 'Please provide an ingredient!' });
 
-    const regex = new RegExp(`^${ingredient}`, 'i');
     // ! Why is this not working? !
-    const recipes = await Recipe.find({
-      'ingredients.ingredient.name': regex,
-    }).select('+ingredients');
+    const paginatedRecipes = await paginate(
+      Recipe.find({
+        'ingredients.ingredient.name': new RegExp(`^${ingredient}`, 'i'),
+      }).select('+ingredients'),
+      { page, limit }
+    );
 
     return res.status(200).json({
       status: 'success',
-      results: recipes.length,
-      data: recipes,
+      ...paginatedRecipes,
     });
   }
 );
@@ -159,9 +147,13 @@ const addOwnRecipe: RequestHandler = catchAsync(async (req, res, next) => {
 });
 
 const getOwnRecipes: RequestHandler = catchAsync(async (req, res, next) => {
+  const { page = 1, limit = RECIPES_PER_PAGE } = req.query;
   const { id } = req.user as UserDocument;
 
-  const recipes = await Recipe.find({ owner: id, visibility: 'private' });
+  const recipes = await paginate(
+    Recipe.find({ owner: id, visibility: 'private' }),
+    { page, limit }
+  );
 
   res.status(201).json({ status: 'success', data: recipes });
 });
@@ -194,15 +186,25 @@ const deleteOwnRecipe: RequestHandler = catchAsync(async (req, res, next) => {
 
 const getFavouriteRecipes: RequestHandler = catchAsync(
   async (req, res, next) => {
+    const { page = 1, limit = RECIPES_PER_PAGE } = req.query;
     const { id: userId } = req.user as UserDocument;
 
     const user = await User.findById(userId)
-      .select('+favouriteRecipes +cookingTime')
-      .populate('favouriteRecipes');
+      .select('+favouriteRecipes')
+      .populate({
+        path: 'favouriteRecipes',
+        select: '+cookingTime +strDescription',
+      });
 
     const recipes = user?.favouriteRecipes;
+    const paginatedRecipes = await paginate(
+      Recipe.find({ _id: { $in: recipes } }).select(
+        '+cookingTime +strDescription'
+      ),
+      { page, limit }
+    );
 
-    res.status(200).json({ status: 'success', data: recipes });
+    res.status(200).json({ status: 'success', ...paginatedRecipes });
   }
 );
 

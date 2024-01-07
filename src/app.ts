@@ -9,6 +9,7 @@ import errorController from './controllers/errorController.js';
 import recipeRouter from './routes/recipeRouter.js';
 import authRouter from './routes/authRouter.js';
 import userRouter from './routes/userRouter.js';
+import shoppingListRouter from './routes/shoppingListRouter.js';
 
 const app = express();
 
@@ -23,6 +24,7 @@ app.use(express.json({ limit: '100kb' }));
 app.use('/api/auth', authRouter);
 app.use('/api/users', userRouter);
 app.use('/api/recipes', recipeRouter);
+app.use('/api/shopping-list', shoppingListRouter);
 
 // Handle not defined routes
 app.all('*', (req: Request, res: Response, next: NextFunction) => {

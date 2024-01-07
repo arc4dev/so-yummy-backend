@@ -28,7 +28,7 @@ const recipeSchema = new mongoose.Schema<RecipeDocument>(
       type: Number,
       required: [true, "The 'cookingTime' field is required."],
       min: [1, 'The cooking time must be at least 1 minute.'],
-      max: [300, 'The cooking time cannot be longer than 5 hours.'],
+      max: [600, 'The cooking time cannot be longer than 10 hours.'],
       select: false,
     },
     ingredients: {
@@ -86,6 +86,7 @@ const recipeSchema = new mongoose.Schema<RecipeDocument>(
     },
   },
   {
+    versionKey: false,
     timestamps: true,
   }
 );
@@ -105,7 +106,7 @@ recipeSchema.pre<mongoose.Query<any, any>>(/^find/, function (next) {
 // Populate ingredient objects before find
 recipeSchema.pre<mongoose.Query<any, any>>(/^find/, function (next) {
   this.populate('ingredients.ingredient', 'name image -_id', Ingredient).select(
-    '-__v -createdAt -updatedAt'
+    '-createdAt -updatedAt'
   );
 
   next();

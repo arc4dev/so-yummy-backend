@@ -1,22 +1,22 @@
+import { Query } from 'mongoose';
+
 const paginate = async (
-  model: any,
-  query: any,
-  pageCurrent: number,
-  pageLimit: number
+  query: Query<any, any>,
+  { page, limit }: { page: any; limit: any }
 ) => {
   try {
-    const recipes = await model
-      .find(query)
-      .skip((pageCurrent - 1) * pageLimit)
-      .limit(pageLimit);
+    page = +page;
+    limit = +limit;
 
     const totalPages = Math.ceil(
-      (await model.countDocuments(query)) / pageLimit
+      (await query.model.countDocuments(query)) / limit
     );
+
+    const recipes = await query.skip((page - 1) * limit).limit(limit);
 
     return {
       results: recipes.length,
-      page: pageCurrent,
+      page,
       totalPages,
       data: recipes,
     };

@@ -56,6 +56,8 @@ async function populateDatabase(recipes: any[]) {
               strMeal: recipe.strMeal,
               strMealThumb: recipe.strMealThumb,
               strInstructions: recipe.strInstructions,
+              strDescription: recipe.strDescription,
+              cookingTime: recipe.cookingTime,
               ingredients: ingredientsRefs,
               category: recipe.category,
             },
