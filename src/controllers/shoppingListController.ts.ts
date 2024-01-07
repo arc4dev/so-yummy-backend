@@ -1,7 +1,7 @@
 import { RequestHandler } from 'express';
 
 import catchAsync from '../utils/catchAsync.js';
-import ShoppingListItem from '../models/ShoppingListItemModel.js';
+import ShoppingListItem from '../models/shoppingListItemModel.js';
 import paginate from '../utils/paginate.js';
 import { RECIPES_PER_PAGE } from '../utils/constants.js';
 
