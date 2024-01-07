@@ -121,6 +121,8 @@ const getAllRecipeCategories: RequestHandler = catchAsync(
 );
 
 const addOwnRecipe: RequestHandler = catchAsync(async (req, res, next) => {
+  // TODO - add photo upload
+
   const { id } = req.user as UserDocument;
   const {
     strMeal,
