@@ -6,21 +6,6 @@ import { RECIPES_PER_PAGE } from '../utils/constants.js';
 import paginate from '../utils/paginate.js';
 import User from '../models/UserModel.js';
 
-const deleteRecipe: RequestHandler = catchAsync(async (req, res, next) => {
-  const recipe = await Recipe.findByIdAndDelete(req.params.recipeId);
-
-  if (!recipe)
-    return res.status(404).json({
-      status: 'fail',
-      message: 'Recipe not found',
-    });
-
-  res.status(204).json({
-    status: 'success',
-    data: null,
-  });
-});
-
 const getRecipes: RequestHandler = catchAsync(async (req, res, next) => {
   const { category, page = 1, limit = RECIPES_PER_PAGE } = req.query;
 
@@ -61,6 +46,21 @@ const getRecipeById: RequestHandler = catchAsync(async (req, res, next) => {
   res.status(200).json({
     status: 'success',
     data: recipe,
+  });
+});
+
+const deleteRecipe: RequestHandler = catchAsync(async (req, res, next) => {
+  const recipe = await Recipe.findByIdAndDelete(req.params.recipeId);
+
+  if (!recipe)
+    return res.status(404).json({
+      status: 'fail',
+      message: 'Recipe not found',
+    });
+
+  res.status(204).json({
+    status: 'success',
+    data: null,
   });
 });
 
