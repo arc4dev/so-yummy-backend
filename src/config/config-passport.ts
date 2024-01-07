@@ -3,7 +3,7 @@ dotenv.config();
 
 import passport from 'passport';
 import passportJWT from 'passport-jwt';
-import User from '../models/UserModel.js';
+import User from '../models/userModel.js';
 
 const ExtractJWT = passportJWT.ExtractJwt;
 const Strategy = passportJWT.Strategy;

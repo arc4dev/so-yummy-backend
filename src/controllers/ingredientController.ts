@@ -1,6 +1,6 @@
 import { RequestHandler } from 'express';
 
-import Ingredient from '../models/IngredientModel.js';
+import Ingredient from '../models/ingredientModel.js';
 import catchAsync from '../utils/catchAsync.js';
 
 const getIngredientsByQuery: RequestHandler = catchAsync(

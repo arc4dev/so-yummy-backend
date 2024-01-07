@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 
-import Ingredient from './IngredientModel.js';
+import Ingredient from './ingredientModel.js';
 import { RECIPE_CATEGORIES } from '../utils/constants.js';
 
 const recipeSchema = new mongoose.Schema<RecipeDocument>(

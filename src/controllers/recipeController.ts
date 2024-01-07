@@ -1,10 +1,10 @@
 import { RequestHandler } from 'express';
 
-import Recipe from '../models/RecipeModel.js';
+import Recipe from '../models/recipeModel.js';
 import catchAsync from '../utils/catchAsync.js';
 import { RECIPES_PER_PAGE } from '../utils/constants.js';
 import paginate from '../utils/paginate.js';
-import User from '../models/UserModel.js';
+import User from '../models/userModel.js';
 
 const getRecipes: RequestHandler = catchAsync(async (req, res, next) => {
   const { category, page = 1, limit = RECIPES_PER_PAGE } = req.query;
