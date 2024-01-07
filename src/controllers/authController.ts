@@ -1,45 +1,16 @@
-import { Request, RequestHandler, Response } from 'express';
+import { Request, RequestHandler } from 'express';
 import { nanoid } from 'nanoid';
-import jwt from 'jsonwebtoken';
-import mongoose from 'mongoose';
 import crypto from 'crypto';
 
 import passport from '../config/config-passport.js';
 import User from '../models/UserModel.js';
 import { sendEmail } from '../utils/sendEmail.js';
 import catchAsync from '../utils/catchAsync.js';
-
-// helpers
-const sendJWT = (user: UserDocument, res: Response) => {
-  const token = signToken({
-    id: user.id,
-    username: user.email,
-  });
-
-  res.status(200).json({
-    status: 'success',
-    data: { email: user.email, name: user.name },
-    token,
-  });
-};
-
-const signToken = (
-  payload: {
-    id: mongoose.Types.ObjectId;
-    username: string;
-  },
-  isLogout = false
-) =>
-  jwt.sign(payload, process.env.JWT_SECRET!, {
-    expiresIn: isLogout
-      ? process.env.JWT_EXPIRATION_LOGOUT
-      : process.env.JWT_EXPIRATION,
-  });
+import { sendJWT } from '../utils/helpers.js';
 
 const url = (verificationToken: string, req: Request) =>
   `${req.protocol}://${req.get('host')}/api/auth/verify/${verificationToken}`;
 
-// Controller
 const auth: RequestHandler = catchAsync(async (req, res, next) => {
   await passport.authenticate(
     'jwt',
