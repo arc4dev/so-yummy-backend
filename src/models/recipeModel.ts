@@ -40,15 +40,16 @@ const recipeSchema = new mongoose.Schema<RecipeDocument>(
           },
           ingredientMeasure: {
             type: String,
-            // enum: {
-            //   values: ['tbs', 'tsp', 'kg', 'g', 'ml'],
-            //   message: `The 'ingredientMeasure' field must be one of the following values: tbs, tsp, ml kg or g.`,
-            // },
+            required: [
+              true,
+              "The 'ingredientMeasure' field is required for each ingredient.",
+            ],
           },
           _id: false,
         },
       ],
       select: false,
+      required: [true, "The 'ingredients' field is required."],
     },
     category: {
       type: String,
@@ -95,6 +96,11 @@ const recipeSchema = new mongoose.Schema<RecipeDocument>(
 recipeSchema.pre<mongoose.Query<any, any>>(/^find/, function (next) {
   // Check if the query is for private recipes
   if (this.getFilter().visibility === 'private') {
+    return next();
+  }
+
+  // If the the query has owner field, this is user's recipe
+  if (this.getFilter().owner) {
     return next();
   }
 

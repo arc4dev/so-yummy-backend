@@ -24,7 +24,6 @@ userRouter
 
 userRouter
   .route('/my-recipes/:recipeId')
-  .get(recipeController.getOwnRecipe)
   .delete(recipeController.deleteOwnRecipe);
 
 userRouter
