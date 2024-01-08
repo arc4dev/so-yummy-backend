@@ -40,15 +40,16 @@ const recipeSchema = new mongoose.Schema<RecipeDocument>(
           },
           ingredientMeasure: {
             type: String,
-            // enum: {
-            //   values: ['tbs', 'tsp', 'kg', 'g', 'ml'],
-            //   message: `The 'ingredientMeasure' field must be one of the following values: tbs, tsp, ml kg or g.`,
-            // },
+            required: [
+              true,
+              "The 'ingredientMeasure' field is required for each ingredient.",
+            ],
           },
           _id: false,
         },
       ],
       select: false,
+      required: [true, "The 'ingredients' field is required."],
     },
     category: {
       type: String,
