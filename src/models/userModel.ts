@@ -57,10 +57,14 @@ const userSchema = new mongoose.Schema<UserDocument>(
   { versionKey: false, timestamps: true }
 );
 
-userSchema.virtual('shopping-list', {
-  ref: 'ShoppingListItem',
-  localField: '_id',
-  foreignField: 'owner',
+// Set a default image path before save
+userSchema.pre('save', async function (next) {
+  if (!this.isModified('image')) return next();
+
+  console.log('host', process.env.HOST);
+  this.image = `${process.env.HOST}/img/users/${this.image}`;
+
+  next();
 });
 
 // Hash password before save
