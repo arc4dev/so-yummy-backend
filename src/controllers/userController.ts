@@ -2,11 +2,11 @@ import { RequestHandler } from 'express';
 import multer from 'multer';
 import sharp from 'sharp';
 import fs from 'fs/promises';
+import path from 'path';
 
 import User from '../models/userModel.js';
 import catchAsync from '../utils/catchAsync.js';
 import { filterObj } from '../utils/helpers.js';
-import path from 'path';
 
 const getCurrentUser: RequestHandler = catchAsync(async (req, res, next) => {
   const { id } = req.user as UserDocument;

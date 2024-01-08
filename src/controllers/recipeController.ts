@@ -33,9 +33,23 @@ const getRecipes: RequestHandler = catchAsync(async (req, res, next) => {
 });
 
 const getRecipeById: RequestHandler = catchAsync(async (req, res, next) => {
-  const recipe = await Recipe.findById(req.params.recipeId).select(
-    '+ingredients +strInstructions +strDescription +cookingTime'
-  );
+  const { id: userId } = req.user as UserDocument;
+  const { recipeId } = req.params;
+  const { isPrivate } = req.query;
+
+  const recipeSelect =
+    '+ingredients +strInstructions +strDescription +cookingTime';
+
+  let recipe;
+  if (isPrivate) {
+    recipe = await Recipe.findOne({
+      owner: userId,
+      _id: recipeId,
+      visibility: 'private',
+    }).select(recipeSelect);
+  } else {
+    recipe = await Recipe.findById(req.params.recipeId).select(recipeSelect);
+  }
 
   if (!recipe)
     return res.status(404).json({
@@ -153,24 +167,13 @@ const getOwnRecipes: RequestHandler = catchAsync(async (req, res, next) => {
   const { id } = req.user as UserDocument;
 
   const recipes = await paginate(
-    Recipe.find({ owner: id, visibility: 'private' }),
+    Recipe.find({ owner: id, visibility: 'private' }).select(
+      '+cookingTime +strDescription'
+    ),
     { page, limit }
   );
 
-  res.status(201).json({ status: 'success', data: recipes });
-});
-
-const getOwnRecipe: RequestHandler = catchAsync(async (req, res, next) => {
-  const { id: userId } = req.user as UserDocument;
-  const { recipeId } = req.params;
-
-  const recipe = await Recipe.findOne({
-    owner: userId,
-    _id: recipeId,
-    visibility: 'private',
-  }).select('+ingredients +strInstructions +strDescription +cookingTime');
-
-  res.status(201).json({ status: 'success', data: recipe });
+  res.status(201).json({ status: 'success', ...recipes });
 });
 
 const deleteOwnRecipe: RequestHandler = catchAsync(async (req, res, next) => {
@@ -278,7 +281,6 @@ export default {
   addOwnRecipe,
   deleteOwnRecipe,
   getOwnRecipes,
-  getOwnRecipe,
   getFavouriteRecipes,
   addFavouriteRecipe,
   deleteFavouriteRecipe,

@@ -24,7 +24,6 @@ enum IngredientMeasure {
   g = 'g',
 }
 
-// * MODELS *
 interface UserDocument extends mongoose.Document {
   id: mongoose.Types.ObjectId;
   email: string;

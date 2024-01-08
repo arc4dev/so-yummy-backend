@@ -99,6 +99,11 @@ recipeSchema.pre<mongoose.Query<any, any>>(/^find/, function (next) {
     return next();
   }
 
+  // If the the query has owner field, this is user's recipe
+  if (this.getFilter().owner) {
+    return next();
+  }
+
   this.find({ visibility: 'public' });
 
   next();
