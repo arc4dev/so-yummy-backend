@@ -7,18 +7,24 @@ const userSchema = new mongoose.Schema<UserDocument>(
     email: {
       type: String,
       required: [true, 'Email is required'],
+      trim: true,
       unique: true,
     },
     password: {
       type: String,
       trim: true,
       required: [true, 'Password is required'],
+      minlength: [8, 'Password must be at least 8 characters long'],
+      maxlength: [32, 'Password must be at most 32 characters long'],
       select: false,
     },
     name: {
       type: String,
       default: 'Guest',
-      required: [true, 'Name is require'],
+      trim: true,
+      minlength: [3, 'Name must be at least 2 characters long'],
+      maxlength: [32, 'Name must be at most 32 characters long'],
+      required: [true, 'Name is required'],
     },
     image: {
       type: String,
