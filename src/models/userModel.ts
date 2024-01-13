@@ -23,7 +23,7 @@ const userSchema = new mongoose.Schema<UserDocument>(
       default: 'Guest',
       trim: true,
       minlength: [3, 'Name must be at least 2 characters long'],
-      maxlength: [32, 'Name must be at most 32 characters long'],
+      maxlength: [16, 'Name must be at most 32 characters long'],
       required: [true, 'Name is required'],
     },
     image: {
