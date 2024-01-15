@@ -4,9 +4,9 @@ import Ingredient from './ingredientModel.js';
 
 const shoppingListItemSchema = new mongoose.Schema<ShoppingListItemDocument>(
   {
-    quantity: {
+    ingredientMeasure: {
       type: String,
-      required: [true, 'Quantity is required'],
+      required: [true, 'IngredientMeasure is required'],
     },
     ingredient: {
       type: mongoose.Schema.ObjectId,

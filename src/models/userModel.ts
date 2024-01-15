@@ -2,6 +2,11 @@ import mongoose from 'mongoose';
 import bcrypt from 'bcrypt';
 import crypto from 'crypto';
 
+const host =
+  process.env.NODE_ENV === 'production'
+    ? 'https://your-deployed-site.com'
+    : 'http://localhost:3001';
+
 const userSchema = new mongoose.Schema<UserDocument>(
   {
     email: {
@@ -26,10 +31,7 @@ const userSchema = new mongoose.Schema<UserDocument>(
       maxlength: [16, 'Name must be at most 32 characters long'],
       required: [true, 'Name is required'],
     },
-    image: {
-      type: String,
-      default: 'default.jpg',
-    },
+    image: String,
     favouriteRecipes: {
       type: [
         {
@@ -64,11 +66,10 @@ const userSchema = new mongoose.Schema<UserDocument>(
 );
 
 // Set a default image path before save
-userSchema.pre('save', async function (next) {
-  if (!this.isModified('image')) return next();
+userSchema.pre('save', function (next) {
+  if (this.isModified('image')) return next();
 
-  console.log('host', process.env.HOST);
-  this.image = `${process.env.HOST}/img/users/${this.image}`;
+  this.image = `${host}/img/users/default.jpeg`;
 
   next();
 });

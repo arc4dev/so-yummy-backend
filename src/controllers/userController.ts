@@ -11,7 +11,7 @@ import { filterObj } from '../utils/helpers.js';
 const getCurrentUser: RequestHandler = catchAsync(async (req, res, next) => {
   const { id } = req.user as UserDocument;
 
-  const user = await User.findById(id);
+  const user = await User.findById(id).select('_id name email image');
   if (!user) {
     return res.status(404).json({ status: 'fail', message: 'User not found' });
   }

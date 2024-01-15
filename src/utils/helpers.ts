@@ -35,7 +35,7 @@ export const sendJWT = (user: UserDocument, res: Response) => {
 
   res.status(200).json({
     status: 'success',
-    data: { email: user.email, name: user.name },
+    data: { email: user.email, name: user.name, image: user.image },
     token,
   });
 };

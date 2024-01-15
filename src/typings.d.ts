@@ -66,7 +66,7 @@ interface RecipeDocument extends mongoose.Document {
 
 interface ShoppingListItemDocument extends mongoose.Document {
   id: mongoose.Types.ObjectId;
-  quantity: string;
+  ingredientMeasure: string;
   ingredient: mongoose.Types.ObjectId | IngredientDocument;
   owner: mongoose.Types.ObjectId | UserDocument;
 }

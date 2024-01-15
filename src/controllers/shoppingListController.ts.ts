@@ -19,12 +19,12 @@ const getOwnIngredients: RequestHandler = catchAsync(async (req, res, next) => {
 
 const addOwnIngredient: RequestHandler = catchAsync(async (req, res, next) => {
   const { id } = req.user as UserDocument;
-  const { quantity, ingredient } = req.body;
+  const { ingredientMeasure, ingredient } = req.body;
 
   // ! Check if the ingredient is already in the shopping list
 
   const shoppingListItem = await ShoppingListItem.create({
-    quantity,
+    ingredientMeasure,
     ingredient,
     owner: id,
   });

@@ -20,7 +20,7 @@ export default class Email {
       subject: subject,
       text: message,
     };
-    console.log(sendgrid);
+
     await sendgrid.send(options);
   }
 
