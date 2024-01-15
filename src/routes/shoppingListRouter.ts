@@ -10,12 +10,12 @@ shoppingListRouter.use(authController.auth);
 
 shoppingListRouter
   .route('/')
-  .get(shoppingListController.getOwnIngredients)
-  .post(shoppingListController.addOwnIngredient);
+  .get(shoppingListController.getShoppingList)
+  .post(shoppingListController.addShoppingListItem);
 
 shoppingListRouter.delete(
   '/:ingredientId',
-  shoppingListController.removeOwnIngredient
+  shoppingListController.deleteShoppingListItem
 );
 
 export default shoppingListRouter;
