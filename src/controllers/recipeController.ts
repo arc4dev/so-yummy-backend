@@ -192,19 +192,13 @@ const deleteOwnRecipe: RequestHandler = catchAsync(async (req, res, next) => {
 const getFavouriteRecipes: RequestHandler = catchAsync(
   async (req, res, next) => {
     const { page = 1, limit = RECIPES_PER_PAGE } = req.query;
-    const { id: userId } = req.user as UserDocument;
+    const { id } = req.user as UserDocument;
 
-    const user = await User.findById(userId)
-      .select('+favouriteRecipes')
-      .populate({
-        path: 'favouriteRecipes',
-        select: '+cookingTime +strDescription',
-      });
+    const recipes = await Recipe.find({ favouritedBy: id });
 
-    const recipes = user?.favouriteRecipes;
     const paginatedRecipes = await paginate(
       Recipe.find({ _id: { $in: recipes } }).select(
-        '+cookingTime +strDescription'
+        '+cookingTime +strDescription -favouritedBy'
       ),
       { page, limit }
     );
@@ -218,53 +212,25 @@ const addFavouriteRecipe: RequestHandler = catchAsync(
     const { recipeId } = req.body;
     const { id: userId } = req.user as UserDocument;
 
-    const user = await User.findById(userId).select('+favouriteRecipes');
-    if (!user) {
-      return res.status(404).json({
-        status: 'fail',
-        message: 'User not found',
-      });
-    }
+    const newFavouriteRecipe = await Recipe.findByIdAndUpdate(
+      recipeId,
+      {
+        $addToSet: { favouritedBy: userId },
+      },
+      { new: true }
+    );
 
-    // Check if the recipe already exists in favorites
-    if (user.favouriteRecipes.includes(recipeId)) {
-      return res.status(400).json({
-        status: 'fail',
-        message: 'Recipe already exists in favorites',
-      });
-    }
-
-    const recipe = await Recipe.findById(recipeId);
-    if (!recipe) {
-      return res.status(404).json({
-        status: 'fail',
-        message: 'Recipe not found',
-      });
-    }
-
-    // Add the recipe to favorites if it doesn't exist
-    user.favouriteRecipes.push(recipeId);
-    await user.save();
-
-    res.status(201).json({ status: 'success', data: recipe });
+    res.status(201).json({ status: 'success', data: newFavouriteRecipe });
   }
 );
 
 const deleteFavouriteRecipe: RequestHandler = catchAsync(
   async (req, res, next) => {
-    const { id: userId } = req.user as UserDocument;
     const { recipeId } = req.params;
+    const { id: userId } = req.user as UserDocument;
 
-    const recipe = await Recipe.findById(recipeId);
-
-    if (!recipe)
-      return res.status(404).json({
-        status: 'fail',
-        message: 'Recipe not found',
-      });
-
-    await User.findByIdAndUpdate(userId, {
-      $pull: { favouriteRecipes: recipeId },
+    await Recipe.findByIdAndUpdate(recipeId, {
+      $pull: { favouritedBy: userId },
     });
 
     res.status(204).json({ status: 'success', data: null });

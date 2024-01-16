@@ -32,16 +32,6 @@ const userSchema = new mongoose.Schema<UserDocument>(
       required: [true, 'Name is required'],
     },
     image: String,
-    favouriteRecipes: {
-      type: [
-        {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: 'Recipe',
-        },
-      ],
-      select: false,
-      default: [],
-    },
     verify: {
       type: Boolean,
       default: false,

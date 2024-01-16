@@ -60,6 +60,7 @@ interface RecipeDocument extends mongoose.Document {
   cookingTime: number;
   ingredients: IngredientRef[];
   category: RecipeCategory;
+  favouritedBy: mongoose.Types.ObjectId[] | UserDocument[];
   visibility: 'public' | 'private';
   owner: mongoose.Types.ObjectId | UserDocument | undefined;
 }
