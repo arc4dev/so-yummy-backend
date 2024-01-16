@@ -69,7 +69,7 @@ const signIn: RequestHandler = catchAsync(async (req, res, next) => {
   // 2. Check if user exists and password is correct
   const user = await User.findOne({
     email,
-  }).select('+password +verify');
+  }).select('+password +verify +_id');
 
   if (!user || !(await user.isCorrectPassword(password, user.password)))
     return res.status(400).json({

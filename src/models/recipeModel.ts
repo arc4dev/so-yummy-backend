@@ -61,6 +61,12 @@ const recipeSchema = new mongoose.Schema<RecipeDocument>(
       },
       select: false,
     },
+    favouritedBy: [
+      {
+        type: mongoose.Schema.ObjectId,
+        ref: 'User',
+      },
+    ],
     visibility: {
       type: String,
       enum: {
