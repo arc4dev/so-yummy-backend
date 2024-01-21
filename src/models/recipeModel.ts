@@ -115,6 +115,8 @@ recipeSchema.pre<mongoose.Query<any, any>>(/^find/, function (next) {
   next();
 });
 
+// "Recipe validation failed: ingredients: Cast to embedded failed for value "[{"ingredient":"659817288ccf7b24a86dd3e2","ingredientMeasure":"1 tsp"}]" (type string) at path "ingredients" because of "ObjectParameterError""
+
 // Populate ingredient objects before find
 recipeSchema.pre<mongoose.Query<any, any>>(/^find/, function (next) {
   this.populate('ingredients.ingredient', 'name image', Ingredient).select(

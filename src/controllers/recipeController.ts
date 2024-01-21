@@ -4,7 +4,6 @@ import Recipe from '../models/recipeModel.js';
 import catchAsync from '../utils/catchAsync.js';
 import { RECIPES_PER_PAGE } from '../utils/constants.js';
 import paginate from '../utils/paginate.js';
-import User from '../models/userModel.js';
 
 const getRecipes: RequestHandler = catchAsync(async (req, res, next) => {
   const { category, page = 1, limit = RECIPES_PER_PAGE } = req.query;
@@ -135,12 +134,9 @@ const getAllRecipeCategories: RequestHandler = catchAsync(
 );
 
 const addOwnRecipe: RequestHandler = catchAsync(async (req, res, next) => {
-  // TODO - add photo upload
-
   const { id } = req.user as UserDocument;
   const {
     strMeal,
-    strMealThumb,
     strInstructions,
     strDescription,
     cookingTime,
@@ -150,7 +146,7 @@ const addOwnRecipe: RequestHandler = catchAsync(async (req, res, next) => {
 
   const newRecipe = await Recipe.create({
     strMeal,
-    strMealThumb,
+    strMealThumb: req.file?.path,
     strInstructions,
     strDescription,
     cookingTime,

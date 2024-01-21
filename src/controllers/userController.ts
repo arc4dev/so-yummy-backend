@@ -32,34 +32,38 @@ const upload = multer({
 
 const uploadImage = upload.single('image');
 
-const resizePhoto = catchAsync(async (req, res, next) => {
-  if (!req.file) return next();
-  const { id, image } = req.user as UserDocument;
+const resizePhoto = (type: 'user' | 'recipe') => {
+  return catchAsync(async (req, res, next) => {
+    console.log(req.file);
+    if (!req.file) return next();
 
-  // if image is in the user document, delete the image from the directory
+    const { id, image } = req.user as UserDocument;
 
-  if (image && !image.includes('default')) {
-    const pathname = path.join(
-      process.cwd(),
-      'public/img/users',
-      image.split('/').pop()!
-    );
+    const directoryPath = type === 'user' ? 'img/users' : 'img/recipes';
 
-    await fs.unlink(pathname);
-  }
+    // if (image && !image.includes('default')) {
+    //   const pathname = path.join(
+    //     process.cwd(),
+    //     `public/${directoryPath}`,
+    //     image.split('/').pop()!
+    //   );
 
-  req.file.filename = `user-${id}-${Date.now()}.jpeg`;
-  req.file.path = `${req.protocol}://${req.get('host')}/img/users/${
-    req.file.filename
-  }`;
+    //   await fs.unlink(pathname);
+    // }
 
-  await sharp(req.file.buffer)
-    .resize(500, 500)
-    .toFormat('jpeg')
-    .toFile(`./public/img/users/${req.file.filename}`);
+    req.file.filename = `${type}-${id}-${Date.now()}.jpeg`;
+    req.file.path = `${req.protocol}://${req.get('host')}/${directoryPath}/${
+      req.file.filename
+    }`;
 
-  next();
-});
+    await sharp(req.file.buffer)
+      .resize(500, 500)
+      .toFormat('jpeg')
+      .toFile(`./public/${directoryPath}/${req.file.filename}`);
+
+    next();
+  });
+};
 
 const updateUser = catchAsync(async (req, res, next) => {
   const { id } = req.user as UserDocument;
