@@ -5,9 +5,8 @@
   "type": "module",
   "main": "./dist/server.js",
   "scripts": {
-    "start": "cross-env NODE_ENV=production node ./dist/server.js",
+    "start": "cross-env NODE_ENV=production tsc && node ./dist/server.js",
     "start:dev": "cross-env NODE_ENV=development nodemon ./dist/server.js",
-    "postinstall": "tsc",
     "lint": "eslint **/*.js",
     "lint:fix": "eslint --fix **/*.js"
   },
