@@ -5,7 +5,7 @@
   "type": "module",
   "main": "./dist/server.js",
   "scripts": {
-    "start": "cross-env NODE_ENV=production tsc && node ./dist/server.js",
+    "start": "cross-env NODE_ENV=production ts-node ./dist/server.js",
     "start:dev": "cross-env NODE_ENV=development nodemon ./dist/server.js",
     "lint": "eslint **/*.js",
     "lint:fix": "eslint --fix **/*.js"
@@ -44,6 +44,7 @@
     "eslint-plugin-import": "2.25.3",
     "eslint-plugin-node": "^11.1.0",
     "eslint-plugin-promise": "5.2.0",
-    "nodemon": "2.0.15"
+    "nodemon": "2.0.15",
+    "ts-node": "^10.9.2"
   }
 }
