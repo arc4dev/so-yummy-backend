@@ -34,10 +34,12 @@ const avatarStorage = new CloudinaryStorage({
 
 const recipeStorage = new CloudinaryStorage({
   cloudinary: cloudinary,
-  params: {
-    folder: 'recipes',
-    allowedFormats: ['jpg', 'jpeg', 'png'],
-    transformation: [{ width: 600, height: 600, crop: 'limit' }],
+  params: (_) => {
+    return {
+      folder: 'recipes',
+      allowedFormats: ['jpg', 'jpeg', 'png'],
+      transformation: [{ width: 600, height: 600, crop: 'limit' }],
+    };
   },
 });
 
