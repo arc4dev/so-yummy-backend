@@ -1,4 +1,5 @@
 import { RequestHandler } from 'express';
+import { v2 as cloudinary } from 'cloudinary';
 
 import Recipe from '../models/recipeModel.js';
 import catchAsync from '../utils/catchAsync.js';
@@ -144,18 +145,37 @@ const addOwnRecipe: RequestHandler = catchAsync(async (req, res, next) => {
     category,
   } = req.body;
 
-  const newRecipe = await Recipe.create({
-    strMeal,
-    strMealThumb: req.file?.path,
-    strInstructions,
-    strDescription,
-    cookingTime,
-    ingredients,
-    category,
-    owner: id,
-  });
+  console.log(req.file);
 
-  res.status(201).json({ status: 'success', data: newRecipe });
+  try {
+    const newRecipe = await Recipe.create({
+      strMeal,
+      strMealThumb: req.file?.path,
+      strInstructions,
+      strDescription,
+      cookingTime,
+      ingredients,
+      category,
+      owner: id,
+    });
+
+    res.status(201).json({
+      status: 'success',
+      data: {
+        strMeal: newRecipe.strMeal,
+        strMealThumb: newRecipe.strMealThumb,
+        strInstructions: newRecipe.strInstructions,
+        strDescription: newRecipe.strDescription,
+        cookingTime: newRecipe.cookingTime,
+        ingredients: newRecipe.ingredients,
+        category: newRecipe.category,
+        _id: newRecipe._id,
+      },
+    });
+  } catch (error) {
+    await cloudinary.uploader.destroy(req.file?.filename!);
+    throw error;
+  }
 });
 
 const getOwnRecipes: RequestHandler = catchAsync(async (req, res, next) => {

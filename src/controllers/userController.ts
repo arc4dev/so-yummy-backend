@@ -1,12 +1,67 @@
-import { RequestHandler } from 'express';
+import e, { RequestHandler } from 'express';
 import multer from 'multer';
-import sharp from 'sharp';
-import fs from 'fs/promises';
-import path from 'path';
+import { v2 as cloudinary } from 'cloudinary';
+import { CloudinaryStorage } from 'multer-storage-cloudinary';
 
 import User from '../models/userModel.js';
 import catchAsync from '../utils/catchAsync.js';
 import { filterObj } from '../utils/helpers.js';
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
+const avatarStorage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: (req) => {
+    const { id } = req?.user as UserDocument;
+
+    return {
+      folder: 'avatars',
+      allowedFormats: ['jpg', 'jpeg', 'png'],
+      public_id: `${id}`,
+      transformation: [
+        { width: 250, height: 250, crop: 'limit' },
+        { quality: 100 },
+        { fetch_format: 'auto' },
+        { format: 'jpg', filename: `${id}` },
+      ],
+    };
+  },
+});
+
+const recipeStorage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: 'recipes',
+    allowedFormats: ['jpg', 'jpeg', 'png'],
+    transformation: [{ width: 600, height: 600, crop: 'limit' }],
+  },
+});
+
+const fileFilter = (
+  _: e.Request,
+  file: Express.Multer.File,
+  cb: multer.FileFilterCallback
+) => {
+  if (file.mimetype.startsWith('image')) cb(null, true);
+  else cb(new Error('Not an image! Please upload only images.'));
+};
+
+const userImage = multer({
+  storage: avatarStorage,
+  fileFilter,
+});
+
+const recipeImage = multer({
+  storage: recipeStorage,
+  fileFilter,
+});
+
+const uploadUserImage = userImage.single('avatar');
+const uploadRecipeImage = recipeImage.single('image');
 
 const getCurrentUser: RequestHandler = catchAsync(async (req, res, next) => {
   const { id } = req.user as UserDocument;
@@ -21,49 +76,6 @@ const getCurrentUser: RequestHandler = catchAsync(async (req, res, next) => {
     data: user,
   });
 });
-
-const upload = multer({
-  storage: multer.memoryStorage(),
-  fileFilter: (_, file, cb) => {
-    if (file.mimetype.startsWith('image')) cb(null, true);
-    else cb(new Error('Not an image! Please upload only images.'));
-  },
-});
-
-const uploadImage = upload.single('image');
-
-const resizePhoto = (type: 'user' | 'recipe') => {
-  return catchAsync(async (req, res, next) => {
-    console.log(req.file);
-    if (!req.file) return next();
-
-    const { id, image } = req.user as UserDocument;
-
-    const directoryPath = type === 'user' ? 'img/users' : 'img/recipes';
-
-    // if (image && !image.includes('default')) {
-    //   const pathname = path.join(
-    //     process.cwd(),
-    //     `public/${directoryPath}`,
-    //     image.split('/').pop()!
-    //   );
-
-    //   await fs.unlink(pathname);
-    // }
-
-    req.file.filename = `${type}-${id}-${Date.now()}.jpeg`;
-    req.file.path = `${req.protocol}://${req.get('host')}/${directoryPath}/${
-      req.file.filename
-    }`;
-
-    await sharp(req.file.buffer)
-      .resize(500, 500)
-      .toFormat('jpeg')
-      .toFile(`./public/${directoryPath}/${req.file.filename}`);
-
-    next();
-  });
-};
 
 const updateUser = catchAsync(async (req, res, next) => {
   const { id } = req.user as UserDocument;
@@ -84,7 +96,7 @@ const updateUser = catchAsync(async (req, res, next) => {
 
 export default {
   getCurrentUser,
-  uploadImage,
-  resizePhoto,
+  uploadUserImage,
+  uploadRecipeImage,
   updateUser,
 };

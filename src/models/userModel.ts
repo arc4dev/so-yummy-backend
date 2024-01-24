@@ -2,11 +2,6 @@ import mongoose from 'mongoose';
 import bcrypt from 'bcrypt';
 import crypto from 'crypto';
 
-const host =
-  process.env.NODE_ENV === 'production'
-    ? 'https://your-deployed-site.com'
-    : 'http://localhost:3001';
-
 const userSchema = new mongoose.Schema<UserDocument>(
   {
     email: {
@@ -31,7 +26,11 @@ const userSchema = new mongoose.Schema<UserDocument>(
       maxlength: [16, 'Name must be at most 32 characters long'],
       required: [true, 'Name is required'],
     },
-    image: String,
+    image: {
+      type: String,
+      default:
+        'https://res.cloudinary.com/dgr5ysrrw/image/upload/v1706098775/avatars/default.jpg',
+    },
     verify: {
       type: Boolean,
       default: false,
@@ -54,15 +53,6 @@ const userSchema = new mongoose.Schema<UserDocument>(
   },
   { versionKey: false, timestamps: true }
 );
-
-// Set a default image path before save
-userSchema.pre('save', function (next) {
-  if (this.isModified('image')) return next();
-
-  this.image = `${host}/img/users/default.jpeg`;
-
-  next();
-});
 
 // Hash password before save
 userSchema.pre('save', async function (next) {

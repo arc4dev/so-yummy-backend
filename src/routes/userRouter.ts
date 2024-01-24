@@ -12,19 +12,14 @@ userRouter.route('/me').get(userController.getCurrentUser);
 
 userRouter.post(
   '/update-me',
-  userController.uploadImage,
-  userController.resizePhoto('user'),
+  userController.uploadUserImage,
   userController.updateUser
 );
 
 userRouter
   .route('/my-recipes')
   .get(recipeController.getOwnRecipes)
-  .post(
-    userController.uploadImage,
-    userController.resizePhoto('recipe'),
-    recipeController.addOwnRecipe
-  );
+  .post(userController.uploadRecipeImage, recipeController.addOwnRecipe);
 
 userRouter
   .route('/my-recipes/:recipeId')
