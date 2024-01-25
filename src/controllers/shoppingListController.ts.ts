@@ -27,7 +27,7 @@ const addShoppingListItem: RequestHandler = catchAsync(
       owner: id,
     });
     if (shoppingListItem)
-      res.status(400).json({
+      return res.status(400).json({
         status: 'fail',
         message: 'This ingredient is already in the shopping list',
       });

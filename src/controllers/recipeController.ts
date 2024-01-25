@@ -145,8 +145,6 @@ const addOwnRecipe: RequestHandler = catchAsync(async (req, res, next) => {
     category,
   } = req.body;
 
-  console.log(req.file);
-
   try {
     const newRecipe = await Recipe.create({
       strMeal,

@@ -38,7 +38,10 @@ const recipeStorage = new CloudinaryStorage({
     return {
       folder: 'recipes',
       allowedFormats: ['jpg', 'jpeg', 'png'],
-      transformation: [{ width: 600, height: 600, crop: 'limit' }],
+      transformation: [
+        { width: 600, height: 600, crop: 'fill' },
+        { format: 'jpg' },
+      ],
     };
   },
 });
@@ -90,9 +93,17 @@ const updateUser = catchAsync(async (req, res, next) => {
     runValidators: true,
   });
 
+  if (!updatedUser)
+    return res.status(404).json({ status: 'fail', message: 'User not found!' });
+
   res.status(200).json({
     status: 'success',
-    user: updatedUser,
+    user: {
+      _id: updatedUser._id,
+      name: updatedUser.name,
+      email: updatedUser.email,
+      image: updatedUser.image,
+    },
   });
 });
 

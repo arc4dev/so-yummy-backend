@@ -10,7 +10,7 @@ userRouter.use(authController.auth);
 
 userRouter.route('/me').get(userController.getCurrentUser);
 
-userRouter.post(
+userRouter.patch(
   '/update-me',
   userController.uploadUserImage,
   userController.updateUser
