@@ -1,8 +1,11 @@
 {
   "name": "so-yummy-backend",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": "18.x"
+  },
   "scripts": {
     "start": "cross-env NODE_ENV=production node ./dist/server.js",
     "start:dev": "cross-env NODE_ENV=development nodemon ./dist/server.js",
